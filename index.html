@@ -25,7 +25,7 @@ footer { background:#ff5da2; padding:15px; text-align:center; color:#fff; positi
   <nav>
     <a href="#play">Play</a>
     <a href="#news">News</a>
-    <a href="#account">Account</a>
+    <a href="account.html">Account</a>
   </nav>
 </header>
 
@@ -67,7 +67,7 @@ footer { background:#ff5da2; padding:15px; text-align:center; color:#fff; positi
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, updatePassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 // Firebase config
 const firebaseConfig = {
@@ -88,7 +88,7 @@ window.signup = function(){
   const email=document.getElementById("email").value;
   const password=document.getElementById("password").value;
   createUserWithEmailAndPassword(auth,email,password)
-    .then(userCredential=>{ showMessage("Account created! Logged in.","green"); showUser(userCredential.user); })
+    .then(userCredential=>{ showMessage("Account created! Redirecting...","green"); showUser(userCredential.user); window.location.href="account.html"; })
     .catch(error=>showMessage(error.message));
 }
 
@@ -96,13 +96,13 @@ window.login = function(){
   const email=document.getElementById("email").value;
   const password=document.getElementById("password").value;
   signInWithEmailAndPassword(auth,email,password)
-    .then(userCredential=>showUser(userCredential.user))
+    .then(userCredential=>{ showUser(userCredential.user); window.location.href="account.html"; })
     .catch(error=>showMessage(error.message));
 }
 
 window.loginWithGoogle = function(){
   signInWithPopup(auth, provider)
-    .then(result=>showUser(result.user))
+    .then(result=>{ showUser(result.user); window.location.href="account.html"; })
     .catch(error=>showMessage(error.message));
 }
 
