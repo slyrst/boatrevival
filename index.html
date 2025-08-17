@@ -6,12 +6,10 @@
 <title>Boat Revival</title>
 
 <style>
-/* ---- Cherry Blossom Roblox Style ---- */
 body {
   margin: 0;
   font-family: 'Verdana', sans-serif;
-  background: #ffe6f0 url('https://i.imgur.com/7oG7XBl.png') no-repeat center top;
-  background-size: cover;
+  background: #ffe6f0;
   color: #333;
 }
 header {
@@ -45,7 +43,6 @@ main {
   cursor: pointer;
 }
 .button:hover { transform: scale(1.1); background-color: #ff4c99; }
-/* ---- Login form ---- */
 #loginForm {
   background: rgba(255, 255, 255, 0.9);
   padding: 25px;
@@ -54,6 +51,13 @@ main {
   margin-top: 20px;
 }
 input { padding: 10px; margin: 5px; width: 200px; }
+#welcome img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 10px;
+}
 footer {
   background: #ff5da2;
   padding: 15px;
@@ -99,7 +103,9 @@ footer {
       <p id="message" style="margin-top:10px;color:red;"></p>
     </div>
     <div id="welcome" style="display:none;">
-      <h3>Welcome, <span id="userDisplay"></span>!</h3>
+      <img id="userPfp" src="" alt="Profile Picture">
+      <span>Hello, <span id="userDisplay"></span></span>
+      <br>
       <button class="button" onclick="logout()">Logout</button>
     </div>
   </section>
@@ -112,21 +118,21 @@ footer {
 <!-- Firebase v9 Modular SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-// ---- REPLACE THESE WITH YOUR FIREBASE PROJECT INFO ----
+// ---- REPLACE WITH YOUR FIREBASE CONFIG ----
 const firebaseConfig = {
-  apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
-  authDomain: "boat-revival.firebaseapp.com",
-  projectId: "boat-revival",
-  storageBucket: "boat-revival.appspot.com",
-  messagingSenderId: "207519236382",
-  appId: "1:207519236382:web:3a61a1b8811fd811e0c90f"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
 // ---- Account Functions ----
 window.signup = function() {
@@ -148,6 +154,13 @@ window.login = function() {
     .catch(error => showMessage(error.message));
 }
 
+// Optional: login with Google
+window.loginWithGoogle = function() {
+  signInWithPopup(auth, provider)
+    .then(result => showUser(result.user))
+    .catch(error => showMessage(error.message));
+}
+
 window.logout = function() {
   signOut(auth).then(() => {
     document.getElementById("loginForm").style.display = "block";
@@ -159,6 +172,7 @@ function showUser(user) {
   document.getElementById("loginForm").style.display = "none";
   document.getElementById("welcome").style.display = "block";
   document.getElementById("userDisplay").innerText = user.email;
+  document.getElementById("userPfp").src = user.photoURL || 'https://www.gravatar.com/avatar/?d=mp';
 }
 
 function showMessage(msg, color="red") {
@@ -175,5 +189,3 @@ onAuthStateChanged(auth, user => {
 
 </body>
 </html>
-
-
