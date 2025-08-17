@@ -53,10 +53,10 @@ window.logout=function(){
   signOut(auth).then(()=>{ window.location.href="index.html"; });
 }
 
-window.changePassword = function(){
-  const newPass = document.getElementById("newPassword").value;
+window.changePassword=function(){
+  const newPass=document.getElementById("newPassword").value;
   if(!newPass){ document.getElementById("passMessage").innerText="Enter a new password"; return; }
-  const user = auth.currentUser;
+  const user=auth.currentUser;
   updatePassword(user,newPass)
     .then(()=>{ document.getElementById("passMessage").style.color="green"; document.getElementById("passMessage").innerText="Password updated!"; })
     .catch(error=>{ document.getElementById("passMessage").style.color="red"; document.getElementById("passMessage").innerText=error.message; });
