@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Account - Boat Revival</title>
+<style>
+body { margin:0; font-family:Verdana,sans-serif; background:#ffe6f0; color:#333; text-align:center; padding:50px 20px; }
+.button { background-color:#ff69b4; color:white; padding:15px 40px; text-decoration:none; font-size:1.3em; border-radius:10px; display:inline-block; margin:10px; transition:transform 0.2s; cursor:pointer; }
+.button:hover { transform:scale(1.1); background-color:#ff4c99; }
+img { width:100px; height:100px; border-radius:50%; margin-bottom:20px; }
+input { padding:10px; margin:5px; width:200px; }
+</style>
+</head>
+<body>
+
+<h1>My Account</h1>
+<img id="userPfp" src="" alt="Profile Picture">
+<h2 id="userEmail"></h2>
+
+<h3>Change Password</h3>
+<input type="password" id="newPassword" placeholder="New Password"><br>
+<button class="button" onclick="changePassword()">Update Password</button>
+<p id="passMessage" style="color:red;"></p>
+
+<br>
+<button class="button" onclick="logout()">Logout</button>
+<br>
+<a href="index.html" class="button">Home</a>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, signOut, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
+  authDomain: "boat-revival.firebaseapp.com",
+  projectId: "boat-revival",
+  storageBucket: "boat-revival.appspot.com",
+  messagingSenderId: "207519236382",
+  appId: "1:207519236382:web:3a61a1b8811fd811e0c90f"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+function showUser(user){
+  document.getElementById("userEmail").innerText=user.email;
+  document.getElementById("userPfp").src=user.photoURL || 'https://www.gravatar.com/avatar/?d=mp';
+}
+
+window.logout=function(){
+  signOut(auth).then(()=>{ window.location.href="index.html"; });
+}
+
+window.changePassword = function(){
+  const newPass = document.getElementById("newPassword").value;
+  if(!newPass){ document.getElementById("passMessage").innerText="Enter a new password"; return; }
+  const user = auth.currentUser;
+  updatePassword(user,newPass)
+    .then(()=>{ document.getElementById("passMessage").style.color="green"; document.getElementById("passMessage").innerText="Password updated!"; })
+    .catch(error=>{ document.getElementById("passMessage").style.color="red"; document.getElementById("passMessage").innerText=error.message; });
+}
+
+// Redirect if not logged in
+onAuthStateChanged(auth,user=>{
+  if(user){ showUser(user); }
+  else{ window.location.href="index.html"; }
+});
+</script>
+
+</body>
+</html>
