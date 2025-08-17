@@ -118,21 +118,20 @@ footer {
 <!-- Firebase v9 Modular SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-// ---- REPLACE WITH YOUR FIREBASE CONFIG ----
+// ---- YOUR ORIGINAL FIREBASE CONFIG ----
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
+  authDomain: "boat-revival.firebaseapp.com",
+  projectId: "boat-revival",
+  storageBucket: "boat-revival.appspot.com",
+  messagingSenderId: "207519236382",
+  appId: "1:207519236382:web:3a61a1b8811fd811e0c90f"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
 
 // ---- Account Functions ----
 window.signup = function() {
@@ -154,13 +153,6 @@ window.login = function() {
     .catch(error => showMessage(error.message));
 }
 
-// Optional: login with Google
-window.loginWithGoogle = function() {
-  signInWithPopup(auth, provider)
-    .then(result => showUser(result.user))
-    .catch(error => showMessage(error.message));
-}
-
 window.logout = function() {
   signOut(auth).then(() => {
     document.getElementById("loginForm").style.display = "block";
@@ -172,6 +164,7 @@ function showUser(user) {
   document.getElementById("loginForm").style.display = "none";
   document.getElementById("welcome").style.display = "block";
   document.getElementById("userDisplay").innerText = user.email;
+  // Show Google photo if exists, otherwise default avatar
   document.getElementById("userPfp").src = user.photoURL || 'https://www.gravatar.com/avatar/?d=mp';
 }
 
