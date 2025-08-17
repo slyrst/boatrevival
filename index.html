@@ -5,10 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Boat Revival</title>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
-
 <style>
 /* ---- Cherry Blossom Roblox Style ---- */
 body {
@@ -46,6 +42,7 @@ main {
   display: inline-block;
   margin: 10px;
   transition: transform 0.2s;
+  cursor: pointer;
 }
 .button:hover { transform: scale(1.1); background-color: #ff4c99; }
 /* ---- Login form ---- */
@@ -67,8 +64,8 @@ footer {
   bottom: 0;
 }
 </style>
-</head>
 
+</head>
 <body>
 
 <header>
@@ -112,24 +109,30 @@ footer {
   &copy; 2025 Boat Revival
 </footer>
 
-<script>
-// ---- Firebase Initialization ----
+<!-- Firebase v9 Modular SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+// ---- REPLACE THESE WITH YOUR FIREBASE PROJECT INFO ----
 const firebaseConfig = {
-  apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
-  authDomain: "boat-revival.firebaseapp.com",
-  projectId: "boat-revival",
-  storageBucket: "boat-revival.appspot.com",
-  messagingSenderId: "207519236382",
-  appId: "1:207519236382:web:3a61a1b8811fd811e0c90f"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
-const app = firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 // ---- Account Functions ----
-function signup() {
+window.signup = function() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
-  auth.createUserWithEmailAndPassword(email, password)
+  createUserWithEmailAndPassword(auth, email, password)
     .then(userCredential => {
       showMessage("Account created! Logged in.", "green");
       showUser(userCredential.user);
@@ -137,16 +140,16 @@ function signup() {
     .catch(error => showMessage(error.message));
 }
 
-function login() {
+window.login = function() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
-  auth.signInWithEmailAndPassword(email, password)
+  signInWithEmailAndPassword(auth, email, password)
     .then(userCredential => showUser(userCredential.user))
     .catch(error => showMessage(error.message));
 }
 
-function logout() {
-  auth.signOut().then(() => {
+window.logout = function() {
+  signOut(auth).then(() => {
     document.getElementById("loginForm").style.display = "block";
     document.getElementById("welcome").style.display = "none";
   });
@@ -164,8 +167,8 @@ function showMessage(msg, color="red") {
   p.innerText = msg;
 }
 
-// Keep user logged in after refresh
-auth.onAuthStateChanged(user => {
+// Keep user logged in
+onAuthStateChanged(auth, user => {
   if (user) showUser(user);
 });
 </script>
