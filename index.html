@@ -100,6 +100,7 @@ footer {
       <input type="password" id="password" placeholder="Password"><br>
       <button class="button" onclick="signup()">Sign Up</button>
       <button class="button" onclick="login()">Login</button>
+      <button class="button" onclick="loginWithGoogle()">Login with Google</button>
       <p id="message" style="margin-top:10px;color:red;"></p>
     </div>
     <div id="welcome" style="display:none;">
@@ -118,7 +119,7 @@ footer {
 <!-- Firebase v9 Modular SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
 // ---- YOUR ORIGINAL FIREBASE CONFIG ----
 const firebaseConfig = {
@@ -132,6 +133,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
 // ---- Account Functions ----
 window.signup = function() {
@@ -153,6 +155,13 @@ window.login = function() {
     .catch(error => showMessage(error.message));
 }
 
+// ** Login with Google **
+window.loginWithGoogle = function() {
+  signInWithPopup(auth, provider)
+    .then(result => showUser(result.user))
+    .catch(error => showMessage(error.message));
+}
+
 window.logout = function() {
   signOut(auth).then(() => {
     document.getElementById("loginForm").style.display = "block";
@@ -164,7 +173,6 @@ function showUser(user) {
   document.getElementById("loginForm").style.display = "none";
   document.getElementById("welcome").style.display = "block";
   document.getElementById("userDisplay").innerText = user.email;
-  // Show Google photo if exists, otherwise default avatar
   document.getElementById("userPfp").src = user.photoURL || 'https://www.gravatar.com/avatar/?d=mp';
 }
 
