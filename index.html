@@ -14,13 +14,15 @@ nav a:hover { color:#ffccdd; }
 #topSearch input { padding:6px; border-radius:6px; border:1px solid #ccc; width:200px; }
 main { padding:30px; }
 section { margin-bottom:60px; }
-.button { background-color:#ff69b4; color:white; padding:10px 20px; text-decoration:none; font-size:1em; border-radius:10px; display:inline-block; margin:5px; transition:transform 0.2s; cursor:pointer; }
+.button { background-color:#ff69b4; color:white; padding:8px 15px; text-decoration:none; font-size:0.9em; border-radius:8px; display:inline-block; margin:3px; transition:transform 0.2s; cursor:pointer; }
 .button:hover { transform:scale(1.05); background-color:#ff4c99; }
 input { padding:8px; margin:5px; width:200px; border-radius:6px; border:1px solid #ccc; }
-#loginForm, #welcome, #friendsSection { background:white; padding:20px; border-radius:10px; margin-top:20px; display:inline-block; }
+#loginForm, #welcome, #friendsSection, #catalog { background:white; padding:20px; border-radius:10px; margin-top:20px; display:inline-block; }
 #welcome img { width:40px; height:40px; border-radius:50%; vertical-align:middle; margin-right:8px; }
-.friend { display:flex; align-items:center; margin:5px 0; }
-.friend img { width:30px; height:30px; border-radius:50%; margin-right:10px; }
+.friend, .profileResult { display:flex; align-items:center; margin:5px 0; gap:10px; }
+.friend img, .profileResult img { width:40px; height:40px; border-radius:50%; }
+.catalog-item { display:inline-block; background:#fafafa; border:1px solid #ddd; border-radius:8px; margin:10px; padding:10px; width:120px; text-align:center; }
+.catalog-item img { width:80px; height:80px; border-radius:8px; margin-bottom:5px; }
 footer { background:#ff5da2; padding:15px; text-align:center; color:#fff; position:fixed; width:100%; bottom:0; }
 </style>
 </head>
@@ -36,6 +38,7 @@ footer { background:#ff5da2; padding:15px; text-align:center; color:#fff; positi
   <nav>
     <a href="#home">Home</a>
     <a href="#friends">Friends</a>
+    <a href="#catalog">Catalog</a>
     <a href="#account">Account</a>
   </nav>
 </header>
@@ -54,10 +57,32 @@ footer { background:#ff5da2; padding:15px; text-align:center; color:#fff; positi
     <div id="friendsSection" style="display:none;">
       <p>You have <span id="friendCount">0</span> friends:</p>
       <div id="friendList"></div>
-      <h3>Search Result</h3>
+      <h3>Search Results</h3>
       <div id="searchResult"></div>
     </div>
     <p id="friendsMessage" style="color:red;"></p>
+  </section>
+
+  <!-- CATALOG -->
+  <section id="catalog">
+    <h2>Catalog</h2>
+    <div id="catalogItems">
+      <div class="catalog-item">
+        <img src="https://tr.rbxcdn.com/9c98a3b4e6e75f3a0c7f4a3c8e3c0f57/150/150/Hat/Png" alt="Hat">
+        <p>Classic Hat</p>
+        <button class="button">Buy</button>
+      </div>
+      <div class="catalog-item">
+        <img src="https://tr.rbxcdn.com/6fdc8b7b2f7c416fdc9b0e2df0b6d7e0/150/150/Shirt/Png" alt="Shirt">
+        <p>Cool Shirt</p>
+        <button class="button">Buy</button>
+      </div>
+      <div class="catalog-item">
+        <img src="https://tr.rbxcdn.com/87dc7fce5e3db22e3fbf23dd42e4c42c/150/150/Pants/Png" alt="Pants">
+        <p>Blue Jeans</p>
+        <button class="button">Buy</button>
+      </div>
+    </div>
   </section>
 
   <!-- ACCOUNT -->
@@ -87,7 +112,7 @@ footer { background:#ff5da2; padding:15px; text-align:center; color:#fff; positi
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
@@ -109,6 +134,7 @@ async function ensureUserDoc(user) {
   if (!snap.exists()) {
     await setDoc(ref, {
       displayName: user.displayName || user.email.split("@")[0],
+      photoURL: user.photoURL || 'https://www.gravatar.com/avatar/?d=mp',
       friends: []
     });
   }
@@ -183,24 +209,39 @@ async function loadFriends(uid){
 }
 
 window.searchUser = async function(){
-  const name=document.getElementById("friendSearchTop").value;
+  const name=document.getElementById("friendSearchTop").value.trim();
   if(!name) return;
-  const currentUser=auth.currentUser;
-  if(!currentUser) return;
   const resultDiv=document.getElementById("searchResult");
-  resultDiv.innerHTML=`<p>Found user: ${name} <button class="button" onclick="sendFriendRequest('${name}')">Add Friend</button></p>`;
+  resultDiv.innerHTML="<p>Searching...</p>";
+
+  const q=query(collection(db,"users"), where("displayName","==",name));
+  const snap=await getDocs(q);
+
+  resultDiv.innerHTML="";
+  if(snap.empty){
+    resultDiv.innerHTML="<p>No users found.</p>";
+    return;
+  }
+  snap.forEach(docSnap=>{
+    const user=docSnap.data();
+    const div=document.createElement("div");
+    div.className="profileResult";
+    div.innerHTML=`
+      <img src="${user.photoURL || 'https://www.gravatar.com/avatar/?d=mp'}">
+      <span>${user.displayName}</span>
+      <button class="button" onclick="sendFriendRequest('${docSnap.id}','${user.displayName}')">Add Friend</button>
+    `;
+    resultDiv.appendChild(div);
+  });
 }
 
-window.sendFriendRequest = async function(name){
+window.sendFriendRequest = async function(uid,name){
   const currentUser=auth.currentUser;
   if(!currentUser) return;
   const ref=doc(db,"users",currentUser.uid);
-  const snap=await getDoc(ref);
-  if(snap.exists()){
-    await updateDoc(ref,{ friends: arrayUnion(name) });
-    loadFriends(currentUser.uid);
-    document.getElementById("searchResult").innerHTML="<p>Friend added!</p>";
-  }
+  await updateDoc(ref,{ friends: arrayUnion(name) });
+  loadFriends(currentUser.uid);
+  document.getElementById("searchResult").innerHTML="<p>Friend added!</p>";
 }
 
 onAuthStateChanged(auth,user=>{
