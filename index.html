@@ -69,7 +69,6 @@ footer { background:#ff5da2; padding:15px; text-align:center; color:#fff; positi
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
   authDomain: "boat-revival.firebaseapp.com",
@@ -83,7 +82,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-// Account functions
 window.signup = function(){
   const email=document.getElementById("email").value;
   const password=document.getElementById("password").value;
@@ -126,7 +124,6 @@ function showMessage(msg,color="red"){
   p.innerText=msg;
 }
 
-// Keep user logged in
 onAuthStateChanged(auth,user=>{
   if(user) showUser(user);
 });
