@@ -122,37 +122,21 @@
   <section>
     <h2>Popular Games</h2>
     <div class="card-container" id="games">
-      <div class="card">
-        <img src="https://placehold.co/150x100" alt="Game">
-        <p>Game 1</p>
-      </div>
-      <div class="card">
-        <img src="https://placehold.co/150x100" alt="Game">
-        <p>Game 2</p>
-      </div>
-      <div class="card">
-        <img src="https://placehold.co/150x100" alt="Game">
-        <p>Game 3</p>
-      </div>
+      <div class="card"><p>Loading games...</p></div>
     </div>
   </section>
 
   <section>
     <h2>Friends</h2>
     <div class="card-container" id="friends">
-      <div class="card"><p>No friends yet.</p></div>
+      <div class="card"><p>Loading friends...</p></div>
     </div>
   </section>
 
   <section>
     <h2>News</h2>
     <div class="card-container" id="news">
-      <div class="card">
-        <p><b>Update v1.0</b><br>Game is live!</p>
-      </div>
-      <div class="card">
-        <p><b>Upcoming</b><br>New events soon.</p>
-      </div>
+      <div class="card"><p>Loading news...</p></div>
     </div>
   </section>
 </main>
@@ -164,6 +148,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+  import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
@@ -176,10 +161,59 @@
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getFirestore(app);
 
   const navBtns = document.getElementById("navBtns");
   const greeting = document.getElementById("greeting");
+  const gamesDiv = document.getElementById("games");
+  const friendsDiv = document.getElementById("friends");
+  const newsDiv = document.getElementById("news");
 
+  // Load Games
+  async function loadGames(){
+    gamesDiv.innerHTML = "";
+    const snap = await getDocs(collection(db, "games"));
+    if(snap.empty){ gamesDiv.innerHTML = "<div class='card'><p>No games yet.</p></div>"; return; }
+    snap.forEach(doc=>{
+      const game = doc.data();
+      gamesDiv.innerHTML += `
+        <div class="card">
+          <img src="${game.thumbnail || 'https://placehold.co/150x100'}" alt="Game">
+          <p>${game.name}</p>
+        </div>`;
+    });
+  }
+
+  // Load Friends
+  async function loadFriends(user){
+    friendsDiv.innerHTML = "";
+    const snap = await getDocs(query(collection(db, "friends"), where("uid", "==", user.uid)));
+    if(snap.empty){ friendsDiv.innerHTML = "<div class='card'><p>No friends yet.</p></div>"; return; }
+    snap.forEach(doc=>{
+      const friend = doc.data();
+      friendsDiv.innerHTML += `
+        <div class="card">
+          <img src="${friend.avatar || 'https://www.gravatar.com/avatar/?d=mp'}" alt="Friend">
+          <p>${friend.name}</p>
+        </div>`;
+    });
+  }
+
+  // Load News
+  async function loadNews(){
+    newsDiv.innerHTML = "";
+    const snap = await getDocs(collection(db, "news"));
+    if(snap.empty){ newsDiv.innerHTML = "<div class='card'><p>No news yet.</p></div>"; return; }
+    snap.forEach(doc=>{
+      const item = doc.data();
+      newsDiv.innerHTML += `
+        <div class="card">
+          <p><b>${item.title}</b><br>${item.text}</p>
+        </div>`;
+    });
+  }
+
+  // User state
   onAuthStateChanged(auth, (user) => {
     if (user) {
       // Logged in
@@ -192,6 +226,7 @@
         <a href="account.html">Account</a>
         <button onclick="logout()">Logout</button>
       `;
+      loadFriends(user);
     } else {
       // Not logged in
       greeting.innerHTML = `
@@ -202,7 +237,10 @@
         <a href="login.html">Login</a>
         <a href="register.html">Register</a>
       `;
+      friendsDiv.innerHTML = "<div class='card'><p>Login to see friends.</p></div>";
     }
+    loadGames();
+    loadNews();
   });
 
   window.logout = function(){
