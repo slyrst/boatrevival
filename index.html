@@ -5,16 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Boat Revival - Home</title>
 <style>
-body { margin:0; font-family:Verdana,sans-serif; background:#ffe6f0; color:#333; }
+body { margin:0; font-family:Verdana,sans-serif; background:#fafafa; color:#333; }
 header { background:#ff69b4; padding:15px; text-align:center; position:sticky; top:0; z-index:1000; }
 #searchBar { padding:10px; width:60%; border-radius:8px; border:1px solid #ccc; }
-#searchResults { margin:20px; text-align:center; }
-.profile-card { display:inline-block; background:white; padding:20px; margin:10px; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.1); width:180px; }
-.profile-card img { width:80px; height:80px; border-radius:50%; }
-.catalog { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:20px; margin:20px; }
-.item { background:white; border-radius:10px; padding:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1); text-align:center; }
-.item img { width:100%; border-radius:10px; }
-.button { background:#ff69b4; color:white; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; }
+#searchResults { margin:10px; text-align:center; }
+
+.container { display:grid; grid-template-columns: 250px 1fr 250px; gap:20px; margin:20px; }
+
+.card { background:white; border-radius:12px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,0.1); margin-bottom:20px; }
+.card h2 { margin-top:0; }
+
+.user-card { text-align:center; }
+.user-card img { width:100px; height:100px; border-radius:50%; margin-bottom:10px; }
+
+.games-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:20px; }
+.game { background:#fff; padding:10px; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.1); text-align:center; }
+.game img { width:100%; border-radius:8px; }
+
+.friend { display:flex; align-items:center; margin-bottom:10px; }
+.friend img { width:40px; height:40px; border-radius:50%; margin-right:10px; }
+
+.button { background:#ff69b4; color:white; padding:6px 12px; border:none; border-radius:6px; cursor:pointer; }
 .button:hover { background:#ff4c99; }
 </style>
 </head>
@@ -25,12 +36,35 @@ header { background:#ff69b4; padding:15px; text-align:center; position:sticky; t
   <div id="searchResults"></div>
 </header>
 
-<h1 style="text-align:center; margin-top:20px;">Catalog</h1>
-<div id="catalog" class="catalog"></div>
+<div class="container">
+  <!-- LEFT: User -->
+  <div>
+    <div id="userCard" class="card user-card">
+      <img src="https://www.gravatar.com/avatar/?d=mp" alt="avatar">
+      <h2>Hi, Guest</h2>
+    </div>
+  </div>
+
+  <!-- CENTER: Games -->
+  <div>
+    <div class="card">
+      <h2>🔥 Popular Games</h2>
+      <div id="gamesGrid" class="games-grid"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Friends -->
+  <div>
+    <div class="card">
+      <h2>👥 Friends</h2>
+      <div id="friendsList"></div>
+    </div>
+  </div>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -46,7 +80,19 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// --- 🔍 SEARCH SYSTEM ---
+// --- USER CARD ---
+onAuthStateChanged(auth, user=>{
+  const card = document.getElementById("userCard");
+  if(user){
+    card.innerHTML = `
+      <img src="${user.photoURL || 'https://www.gravatar.com/avatar/?d=mp'}" alt="avatar">
+      <h2>Hi, ${user.displayName || "Player"}</h2>
+      <p>${user.email}</p>
+    `;
+  }
+});
+
+// --- SEARCH USERS ---
 const searchBar = document.getElementById("searchBar");
 const searchResults = document.getElementById("searchResults");
 
@@ -76,9 +122,9 @@ async function searchUsers(name){
   snap.forEach(doc=>{
     const user = doc.data();
     const div = document.createElement("div");
-    div.className = "profile-card";
+    div.className = "card";
     div.innerHTML = `
-      <img src="${user.photoURL || 'https://www.gravatar.com/avatar/?d=mp'}" alt="pfp">
+      <img src="${user.photoURL || 'https://www.gravatar.com/avatar/?d=mp'}" style="width:60px; height:60px; border-radius:50%;">
       <h3>${user.displayName}</h3>
       <p>${user.email}</p>
     `;
@@ -86,26 +132,43 @@ async function searchUsers(name){
   });
 }
 
-// --- 📦 DYNAMIC CATALOG ---
-async function loadCatalog(){
-  const snap = await getDocs(collection(db, "catalog"));
-  const catalogDiv = document.getElementById("catalog");
-  catalogDiv.innerHTML = "";
-
+// --- GAMES GRID ---
+async function loadGames(){
+  const snap = await getDocs(collection(db, "games"));
+  const grid = document.getElementById("gamesGrid");
+  grid.innerHTML = "";
   snap.forEach(doc=>{
-    const item = doc.data();
+    const g = doc.data();
     const div = document.createElement("div");
-    div.className = "item";
+    div.className = "game";
     div.innerHTML = `
-      <img src="${item.image}" alt="${item.name}">
-      <h3>${item.name}</h3>
-      <p>${item.description || ""}</p>
+      <img src="${g.thumbnail || 'https://via.placeholder.com/150'}">
+      <h3>${g.name}</h3>
+      <p>${g.players || 0} playing</p>
     `;
-    catalogDiv.appendChild(div);
+    grid.appendChild(div);
   });
 }
 
-loadCatalog();
+// --- FRIENDS LIST ---
+async function loadFriends(){
+  const snap = await getDocs(collection(db, "users")); // later filter by actual friends
+  const list = document.getElementById("friendsList");
+  list.innerHTML = "";
+  snap.forEach(doc=>{
+    const u = doc.data();
+    const div = document.createElement("div");
+    div.className = "friend";
+    div.innerHTML = `
+      <img src="${u.photoURL || 'https://www.gravatar.com/avatar/?d=mp'}">
+      <span>${u.displayName}</span>
+    `;
+    list.appendChild(div);
+  });
+}
+
+loadGames();
+loadFriends();
 </script>
 </body>
 </html>
