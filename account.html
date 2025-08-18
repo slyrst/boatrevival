@@ -57,48 +57,78 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const storage = getStorage(app);
 
+// Show user info
 function showUser(user){
-  document.getElementById("userEmail").innerText=user.email;
-  document.getElementById("userPfp").src=user.photoURL || 'https://www.gravatar.com/avatar/?d=mp';
-  document.getElementById("userDisplayName").innerText=user.displayName || "No display name";
+  document.getElementById("userEmail").innerText = user.email;
+  document.getElementById("userPfp").src = user.photoURL || 'https://www.gravatar.com/avatar/?d=mp';
+  document.getElementById("userDisplayName").innerText = user.displayName || "No display name";
 }
 
-window.logout=function(){
-  signOut(auth).then(()=>{ window.location.href="index.html"; });
+// Logout
+window.logout = function(){
+  signOut(auth).then(()=>{
+    window.location.href="index.html";
+  });
 }
 
-window.changePassword=function(){
-  const newPass=document.getElementById("newPassword").value;
-  if(!newPass){ document.getElementById("passMessage").innerText="Enter a new password"; return; }
-  const user=auth.currentUser;
-  updatePassword(user,newPass)
-    .then(()=>{ document.getElementById("passMessage").style.color="green"; document.getElementById("passMessage").innerText="Password updated!"; })
-    .catch(error=>{ document.getElementById("passMessage").style.color="red"; document.getElementById("passMessage").innerText=error.message; });
+// Change password
+window.changePassword = function(){
+  const newPass = document.getElementById("newPassword").value;
+  if(!newPass){ document.getElementById("passMessage").innerText = "Enter a new password"; return; }
+  const user = auth.currentUser;
+  updatePassword(user, newPass)
+    .then(()=>{ 
+      document.getElementById("passMessage").style.color="green"; 
+      document.getElementById("passMessage").innerText="Password updated!";
+    })
+    .catch(error=>{ 
+      document.getElementById("passMessage").style.color="red"; 
+      document.getElementById("passMessage").innerText = error.message;
+    });
 }
 
-window.changeDisplayName=function(){
-  const newName=document.getElementById("displayName").value;
+// Change display name
+window.changeDisplayName = function(){
+  const newName = document.getElementById("displayName").value;
   if(!newName){ document.getElementById("nameMessage").innerText="Enter a display name"; return; }
-  const user=auth.currentUser;
-  updateProfile(user,{ displayName:newName })
-    .then(()=>{ document.getElementById("nameMessage").style.color="green"; document.getElementById("nameMessage").innerText="Display name updated!"; showUser(user); })
-    .catch(error=>{ document.getElementById("nameMessage").style.color="red"; document.getElementById("nameMessage").innerText=error.message; });
+  const user = auth.currentUser;
+  updateProfile(user, { displayName: newName })
+    .then(()=>{
+      document.getElementById("nameMessage").style.color="green";
+      document.getElementById("nameMessage").innerText="Display name updated!";
+      showUser(user);
+    })
+    .catch(error=>{
+      document.getElementById("nameMessage").style.color="red";
+      document.getElementById("nameMessage").innerText=error.message;
+    });
 }
 
-window.changePFP=function(){
-  const file=document.getElementById("pfpUpload").files[0];
+// Change profile picture
+window.changePFP = async function(){
+  const file = document.getElementById("pfpUpload").files[0];
   if(!file){ document.getElementById("pfpMessage").innerText="Select an image"; return; }
-  if(file.size>2*1024*1024){ document.getElementById("pfpMessage").innerText="Max size 2MB"; return; }
-  const user=auth.currentUser;
-  const storageRef=ref(storage, `pfp/${user.uid}.png`);
-  uploadBytes(storageRef,file)
-    .then(()=>getDownloadURL(storageRef))
-    .then(url=>updateProfile(user,{ photoURL:url }))
-    .then(()=>{ document.getElementById("pfpMessage").style.color="green"; document.getElementById("pfpMessage").innerText="Profile picture updated!"; showUser(user); })
-    .catch(error=>{ document.getElementById("pfpMessage").style.color="red"; document.getElementById("pfpMessage").innerText=error.message; });
+  if(file.size > 2*1024*1024){ document.getElementById("pfpMessage").innerText="Max size 2MB"; return; }
+
+  const user = auth.currentUser;
+  if(!user) return;
+
+  try {
+    const storageRef = ref(storage, `pfp/${user.uid}.png`);
+    await uploadBytes(storageRef, file);
+    const url = await getDownloadURL(storageRef);
+    await updateProfile(user, { photoURL: url });
+    document.getElementById("userPfp").src = url;
+    document.getElementById("pfpMessage").style.color="green";
+    document.getElementById("pfpMessage").innerText="Profile picture updated!";
+  } catch(error){
+    document.getElementById("pfpMessage").style.color="red";
+    document.getElementById("pfpMessage").innerText = error.message;
+  }
 }
 
-onAuthStateChanged(auth,user=>{
+// Redirect if not logged in
+onAuthStateChanged(auth, user=>{
   if(user){ showUser(user); }
   else{ window.location.href="index.html"; }
 });
