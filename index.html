@@ -1,47 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Boat Revival</title>
-  <style>
-    body { margin:0; font-family:Verdana,sans-serif; background:#f2f2f2; }
-    header { background:#ff69b4; padding:10px; display:flex; align-items:center; }
-    header img { height:40px; margin-right:20px; }
-    nav a { margin:0 10px; color:white; text-decoration:none; font-weight:bold; }
-    nav a:hover { text-decoration:underline; }
-    .search-box { margin-left:auto; }
-    .search-box input { padding:8px; border-radius:5px; border:1px solid #ccc; }
-    .container { padding:20px; }
-    .search-results { margin-top:20px; }
-    .profile-card { background:white; border-radius:10px; padding:15px; margin:10px; display:inline-block; text-align:center; width:200px; }
-    .profile-card img { width:100px; height:100px; border-radius:50%; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boat Revival - Home</title>
+<style>
+body { margin:0; font-family:Verdana,sans-serif; background:#ffe6f0; color:#333; }
+header { background:#ff69b4; padding:15px; text-align:center; position:sticky; top:0; z-index:1000; }
+#searchBar { padding:10px; width:60%; border-radius:8px; border:1px solid #ccc; }
+#searchResults { margin:20px; text-align:center; }
+.profile-card { display:inline-block; background:white; padding:20px; margin:10px; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.1); width:180px; }
+.profile-card img { width:80px; height:80px; border-radius:50%; }
+.catalog { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:20px; margin:20px; }
+.item { background:white; border-radius:10px; padding:15px; box-shadow:0 4px 6px rgba(0,0,0,0.1); text-align:center; }
+.item img { width:100%; border-radius:10px; }
+.button { background:#ff69b4; color:white; padding:10px 20px; border:none; border-radius:6px; cursor:pointer; }
+.button:hover { background:#ff4c99; }
+</style>
 </head>
 <body>
 
 <header>
-  <!-- Custom Logo (not Roblox) -->
-  <img src="logo.png" alt="Boat Revival Logo">
-  <nav>
-    <a href="index.html">Home</a>
-    <a href="catalog.html">Catalog</a>
-    <a href="account.html">Account</a>
-  </nav>
-  <div class="search-box">
-    <input type="text" id="searchInput" placeholder="Search users...">
-  </div>
+  <input id="searchBar" type="text" placeholder="Search players...">
+  <div id="searchResults"></div>
 </header>
 
-<div class="container">
-  <h1>Welcome to Boat Revival</h1>
-  <div class="search-results" id="searchResults"></div>
-</div>
+<h1 style="text-align:center; margin-top:20px;">Catalog</h1>
+<div id="catalog" class="catalog"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
@@ -53,37 +43,69 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 🔍 Search for users by displayName
-document.getElementById("searchInput").addEventListener("keyup", async (e)=>{
-  const term = e.target.value.trim();
-  const resultsDiv = document.getElementById("searchResults");
-  resultsDiv.innerHTML = "";
+// --- 🔍 SEARCH SYSTEM ---
+const searchBar = document.getElementById("searchBar");
+const searchResults = document.getElementById("searchResults");
 
-  if(term.length < 3) return; // wait until 3+ letters
+searchBar.addEventListener("input", () => {
+  const text = searchBar.value.trim();
+  searchResults.innerHTML = "";
+  if (text) {
+    const btn = document.createElement("button");
+    btn.className = "button";
+    btn.textContent = `Wanna search person "${text}"?`;
+    btn.onclick = () => searchUsers(text);
+    searchResults.appendChild(btn);
+  }
+});
 
-  const q = query(collection(db, "users"), where("displayName", ">=", term), where("displayName", "<=", term + "\uf8ff"));
-  const querySnap = await getDocs(q);
+async function searchUsers(name){
+  searchResults.innerHTML = "Searching...";
+  const q = query(collection(db, "users"), where("displayName", "==", name));
+  const snap = await getDocs(q);
 
-  if(querySnap.empty){
-    resultsDiv.innerHTML = "<p>No users found.</p>";
+  searchResults.innerHTML = "";
+  if(snap.empty){
+    searchResults.innerHTML = `<p>No user found with name "${name}"</p>`;
     return;
   }
 
-  querySnap.forEach(doc=>{
+  snap.forEach(doc=>{
     const user = doc.data();
-    const card = document.createElement("div");
-    card.className = "profile-card";
-    card.innerHTML = `
-      <img src="${user.photoURL || 'https://www.gravatar.com/avatar/?d=mp'}">
-      <h3>${user.displayName || "Unnamed"}</h3>
-      <p>${user.email || ""}</p>
+    const div = document.createElement("div");
+    div.className = "profile-card";
+    div.innerHTML = `
+      <img src="${user.photoURL || 'https://www.gravatar.com/avatar/?d=mp'}" alt="pfp">
+      <h3>${user.displayName}</h3>
+      <p>${user.email}</p>
     `;
-    resultsDiv.appendChild(card);
+    searchResults.appendChild(div);
   });
-});
-</script>
+}
 
+// --- 📦 DYNAMIC CATALOG ---
+async function loadCatalog(){
+  const snap = await getDocs(collection(db, "catalog"));
+  const catalogDiv = document.getElementById("catalog");
+  catalogDiv.innerHTML = "";
+
+  snap.forEach(doc=>{
+    const item = doc.data();
+    const div = document.createElement("div");
+    div.className = "item";
+    div.innerHTML = `
+      <img src="${item.image}" alt="${item.name}">
+      <h3>${item.name}</h3>
+      <p>${item.description || ""}</p>
+    `;
+    catalogDiv.appendChild(div);
+  });
+}
+
+loadCatalog();
+</script>
 </body>
 </html>
