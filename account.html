@@ -17,6 +17,17 @@ input { padding:10px; margin:5px; width:200px; }
 <h1>My Account</h1>
 <img id="userPfp" src="" alt="Profile Picture">
 <h2 id="userEmail"></h2>
+<h3 id="userDisplayName"></h3>
+
+<h3>Change Display Name</h3>
+<input type="text" id="displayName" placeholder="New Display Name"><br>
+<button class="button" onclick="changeDisplayName()">Update Name</button>
+<p id="nameMessage" style="color:red;"></p>
+
+<h3>Change Profile Picture</h3>
+<input type="file" id="pfpUpload" accept="image/png, image/jpeg"><br>
+<button class="button" onclick="changePFP()">Upload</button>
+<p id="pfpMessage" style="color:red;"></p>
 
 <h3>Change Password</h3>
 <input type="password" id="newPassword" placeholder="New Password"><br>
@@ -30,7 +41,8 @@ input { padding:10px; margin:5px; width:200px; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, signOut, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, signOut, onAuthStateChanged, updatePassword, updateProfile } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
@@ -43,10 +55,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const storage = getStorage(app);
 
 function showUser(user){
   document.getElementById("userEmail").innerText=user.email;
   document.getElementById("userPfp").src=user.photoURL || 'https://www.gravatar.com/avatar/?d=mp';
+  document.getElementById("userDisplayName").innerText=user.displayName || "No display name";
 }
 
 window.logout=function(){
@@ -62,7 +76,28 @@ window.changePassword=function(){
     .catch(error=>{ document.getElementById("passMessage").style.color="red"; document.getElementById("passMessage").innerText=error.message; });
 }
 
-// Redirect if not logged in
+window.changeDisplayName=function(){
+  const newName=document.getElementById("displayName").value;
+  if(!newName){ document.getElementById("nameMessage").innerText="Enter a display name"; return; }
+  const user=auth.currentUser;
+  updateProfile(user,{ displayName:newName })
+    .then(()=>{ document.getElementById("nameMessage").style.color="green"; document.getElementById("nameMessage").innerText="Display name updated!"; showUser(user); })
+    .catch(error=>{ document.getElementById("nameMessage").style.color="red"; document.getElementById("nameMessage").innerText=error.message; });
+}
+
+window.changePFP=function(){
+  const file=document.getElementById("pfpUpload").files[0];
+  if(!file){ document.getElementById("pfpMessage").innerText="Select an image"; return; }
+  if(file.size>2*1024*1024){ document.getElementById("pfpMessage").innerText="Max size 2MB"; return; }
+  const user=auth.currentUser;
+  const storageRef=ref(storage, `pfp/${user.uid}.png`);
+  uploadBytes(storageRef,file)
+    .then(()=>getDownloadURL(storageRef))
+    .then(url=>updateProfile(user,{ photoURL:url }))
+    .then(()=>{ document.getElementById("pfpMessage").style.color="green"; document.getElementById("pfpMessage").innerText="Profile picture updated!"; showUser(user); })
+    .catch(error=>{ document.getElementById("pfpMessage").style.color="red"; document.getElementById("pfpMessage").innerText=error.message; });
+}
+
 onAuthStateChanged(auth,user=>{
   if(user){ showUser(user); }
   else{ window.location.href="index.html"; }
