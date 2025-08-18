@@ -6,16 +6,17 @@
 <title>Boat Revival</title>
 <style>
 body { margin:0; font-family:Verdana,sans-serif; background:#ffe6f0; color:#333; }
-header { background:#ff5da2; padding:15px 25px; display:flex; align-items:center; }
-header img { width:50px; height:50px; border-radius:50%; margin-right:15px; }
-header h1 { margin:0; font-size:1.8em; color:white; flex-grow:1; }
-nav a { margin:0 15px; color:#fff; text-decoration:none; font-weight:bold; }
+header { background:#ff5da2; padding:10px 20px; display:flex; align-items:center; justify-content:space-between; }
+header h1 { margin:0; font-size:1.5em; color:white; }
+nav a { margin:0 10px; color:#fff; text-decoration:none; font-weight:bold; }
 nav a:hover { color:#ffccdd; }
+#topSearch { display:flex; align-items:center; gap:10px; }
+#topSearch input { padding:6px; border-radius:6px; border:1px solid #ccc; width:200px; }
 main { padding:30px; }
+section { margin-bottom:60px; }
 .button { background-color:#ff69b4; color:white; padding:10px 20px; text-decoration:none; font-size:1em; border-radius:10px; display:inline-block; margin:5px; transition:transform 0.2s; cursor:pointer; }
 .button:hover { transform:scale(1.05); background-color:#ff4c99; }
 input { padding:8px; margin:5px; width:200px; border-radius:6px; border:1px solid #ccc; }
-section { margin-bottom:40px; }
 #loginForm, #welcome, #friendsSection { background:white; padding:20px; border-radius:10px; margin-top:20px; display:inline-block; }
 #welcome img { width:40px; height:40px; border-radius:50%; vertical-align:middle; margin-right:8px; }
 .friend { display:flex; align-items:center; margin:5px 0; }
@@ -25,9 +26,13 @@ footer { background:#ff5da2; padding:15px; text-align:center; color:#fff; positi
 </head>
 <body>
 
+<!-- HEADER / TOP NAV -->
 <header>
-  <img src="https://www.roblox.com/favicon.ico" alt="Logo">
   <h1>Boat Revival</h1>
+  <div id="topSearch">
+    <input type="text" id="friendSearchTop" placeholder="Search users">
+    <button class="button" onclick="searchUser()">Search</button>
+  </div>
   <nav>
     <a href="#home">Home</a>
     <a href="#friends">Friends</a>
@@ -49,9 +54,7 @@ footer { background:#ff5da2; padding:15px; text-align:center; color:#fff; positi
     <div id="friendsSection" style="display:none;">
       <p>You have <span id="friendCount">0</span> friends:</p>
       <div id="friendList"></div>
-      <h3>Add Friend</h3>
-      <input type="text" id="friendSearch" placeholder="Search display name">
-      <button class="button" onclick="searchUser()">Search</button>
+      <h3>Search Result</h3>
       <div id="searchResult"></div>
     </div>
     <p id="friendsMessage" style="color:red;"></p>
@@ -83,7 +86,7 @@ footer { background:#ff5da2; padding:15px; text-align:center; color:#fff; positi
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, updateProfile } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -106,13 +109,12 @@ async function ensureUserDoc(user) {
   if (!snap.exists()) {
     await setDoc(ref, {
       displayName: user.displayName || user.email.split("@")[0],
-      friends: [],
-      requests: []
+      friends: []
     });
   }
 }
 
-window.signup = async function(){
+window.signup = function(){
   const email=document.getElementById("email").value;
   const password=document.getElementById("password").value;
   createUserWithEmailAndPassword(auth,email,password)
@@ -181,11 +183,10 @@ async function loadFriends(uid){
 }
 
 window.searchUser = async function(){
-  const name=document.getElementById("friendSearch").value;
+  const name=document.getElementById("friendSearchTop").value;
   if(!name) return;
   const currentUser=auth.currentUser;
   if(!currentUser) return;
-  // In real app you'd query Firestore by displayName; simplified here
   const resultDiv=document.getElementById("searchResult");
   resultDiv.innerHTML=`<p>Found user: ${name} <button class="button" onclick="sendFriendRequest('${name}')">Add Friend</button></p>`;
 }
@@ -196,7 +197,6 @@ window.sendFriendRequest = async function(name){
   const ref=doc(db,"users",currentUser.uid);
   const snap=await getDoc(ref);
   if(snap.exists()){
-    const data=snap.data();
     await updateDoc(ref,{ friends: arrayUnion(name) });
     loadFriends(currentUser.uid);
     document.getElementById("searchResult").innerHTML="<p>Friend added!</p>";
