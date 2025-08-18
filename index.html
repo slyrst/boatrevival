@@ -1,118 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Boat Revival</title>
-<style>
-body { margin:0; font-family:Verdana,sans-serif; background:#ffe6f0; color:#333; }
-header { background:#ff5da2; padding:10px 20px; display:flex; align-items:center; justify-content:space-between; }
-header h1 { margin:0; font-size:1.5em; color:white; }
-nav a { margin:0 10px; color:#fff; text-decoration:none; font-weight:bold; }
-nav a:hover { color:#ffccdd; }
-#topSearch { display:flex; align-items:center; gap:10px; }
-#topSearch input { padding:6px; border-radius:6px; border:1px solid #ccc; width:200px; }
-main { padding:30px; }
-section { margin-bottom:60px; }
-.button { background-color:#ff69b4; color:white; padding:8px 15px; text-decoration:none; font-size:0.9em; border-radius:8px; display:inline-block; margin:3px; transition:transform 0.2s; cursor:pointer; }
-.button:hover { transform:scale(1.05); background-color:#ff4c99; }
-input { padding:8px; margin:5px; width:200px; border-radius:6px; border:1px solid #ccc; }
-#loginForm, #welcome, #friendsSection, #catalog { background:white; padding:20px; border-radius:10px; margin-top:20px; display:inline-block; }
-#welcome img { width:40px; height:40px; border-radius:50%; vertical-align:middle; margin-right:8px; }
-.friend, .profileResult { display:flex; align-items:center; margin:5px 0; gap:10px; }
-.friend img, .profileResult img { width:40px; height:40px; border-radius:50%; }
-.catalog-item { display:inline-block; background:#fafafa; border:1px solid #ddd; border-radius:8px; margin:10px; padding:10px; width:120px; text-align:center; }
-.catalog-item img { width:80px; height:80px; border-radius:8px; margin-bottom:5px; }
-footer { background:#ff5da2; padding:15px; text-align:center; color:#fff; position:fixed; width:100%; bottom:0; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boat Revival</title>
+  <style>
+    body { margin:0; font-family:Verdana,sans-serif; background:#f2f2f2; }
+    header { background:#ff69b4; padding:10px; display:flex; align-items:center; }
+    header img { height:40px; margin-right:20px; }
+    nav a { margin:0 10px; color:white; text-decoration:none; font-weight:bold; }
+    nav a:hover { text-decoration:underline; }
+    .search-box { margin-left:auto; }
+    .search-box input { padding:8px; border-radius:5px; border:1px solid #ccc; }
+    .container { padding:20px; }
+    .search-results { margin-top:20px; }
+    .profile-card { background:white; border-radius:10px; padding:15px; margin:10px; display:inline-block; text-align:center; width:200px; }
+    .profile-card img { width:100px; height:100px; border-radius:50%; }
+  </style>
 </head>
 <body>
 
-<!-- HEADER / TOP NAV -->
 <header>
-  <h1>Boat Revival</h1>
-  <div id="topSearch">
-    <input type="text" id="friendSearchTop" placeholder="Search users">
-    <button class="button" onclick="searchUser()">Search</button>
-  </div>
+  <!-- Custom Logo (not Roblox) -->
+  <img src="logo.png" alt="Boat Revival Logo">
   <nav>
-    <a href="#home">Home</a>
-    <a href="#friends">Friends</a>
-    <a href="#catalog">Catalog</a>
-    <a href="#account">Account</a>
+    <a href="index.html">Home</a>
+    <a href="catalog.html">Catalog</a>
+    <a href="account.html">Account</a>
   </nav>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search users...">
+  </div>
 </header>
 
-<main>
-  <!-- HOME -->
-  <section id="home">
-    <h2>Home</h2>
-    <p>Welcome to Boat Revival — a classic Roblox revival project.</p>
-    <a href="#" class="button">Play Now</a>
-  </section>
-
-  <!-- FRIENDS -->
-  <section id="friends">
-    <h2>Friends</h2>
-    <div id="friendsSection" style="display:none;">
-      <p>You have <span id="friendCount">0</span> friends:</p>
-      <div id="friendList"></div>
-      <h3>Search Results</h3>
-      <div id="searchResult"></div>
-    </div>
-    <p id="friendsMessage" style="color:red;"></p>
-  </section>
-
-  <!-- CATALOG -->
-  <section id="catalog">
-    <h2>Catalog</h2>
-    <div id="catalogItems">
-      <div class="catalog-item">
-        <img src="https://tr.rbxcdn.com/9c98a3b4e6e75f3a0c7f4a3c8e3c0f57/150/150/Hat/Png" alt="Hat">
-        <p>Classic Hat</p>
-        <button class="button">Buy</button>
-      </div>
-      <div class="catalog-item">
-        <img src="https://tr.rbxcdn.com/6fdc8b7b2f7c416fdc9b0e2df0b6d7e0/150/150/Shirt/Png" alt="Shirt">
-        <p>Cool Shirt</p>
-        <button class="button">Buy</button>
-      </div>
-      <div class="catalog-item">
-        <img src="https://tr.rbxcdn.com/87dc7fce5e3db22e3fbf23dd42e4c42c/150/150/Pants/Png" alt="Pants">
-        <p>Blue Jeans</p>
-        <button class="button">Buy</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ACCOUNT -->
-  <section id="account">
-    <h2>Login / Create Account</h2>
-    <div id="loginForm">
-      <input type="email" id="email" placeholder="Email"><br>
-      <input type="password" id="password" placeholder="Password"><br>
-      <button class="button" onclick="signup()">Sign Up</button>
-      <button class="button" onclick="login()">Login</button>
-      <button class="button" onclick="loginWithGoogle()">Login with Google</button>
-      <p id="message" style="margin-top:10px;color:red;"></p>
-    </div>
-    <div id="welcome" style="display:none;">
-      <img id="userPfp" src="" alt="Profile Picture">
-      <span>Hello, <span id="userDisplay"></span></span>
-      <br>
-      <button class="button" onclick="logout()">Logout</button>
-    </div>
-  </section>
-</main>
-
-<footer>
-  &copy; 2025 Boat Revival
-</footer>
+<div class="container">
+  <h1>Welcome to Boat Revival</h1>
+  <div class="search-results" id="searchResults"></div>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
@@ -124,128 +53,35 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
 const db = getFirestore(app);
 
-async function ensureUserDoc(user) {
-  const ref = doc(db, "users", user.uid);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) {
-    await setDoc(ref, {
-      displayName: user.displayName || user.email.split("@")[0],
-      photoURL: user.photoURL || 'https://www.gravatar.com/avatar/?d=mp',
-      friends: []
-    });
-  }
-}
+// 🔍 Search for users by displayName
+document.getElementById("searchInput").addEventListener("keyup", async (e)=>{
+  const term = e.target.value.trim();
+  const resultsDiv = document.getElementById("searchResults");
+  resultsDiv.innerHTML = "";
 
-window.signup = function(){
-  const email=document.getElementById("email").value;
-  const password=document.getElementById("password").value;
-  createUserWithEmailAndPassword(auth,email,password)
-    .then(async userCredential=>{
-      await ensureUserDoc(userCredential.user);
-      showUser(userCredential.user);
-    })
-    .catch(error=>showMessage(error.message));
-}
+  if(term.length < 3) return; // wait until 3+ letters
 
-window.login = function(){
-  const email=document.getElementById("email").value;
-  const password=document.getElementById("password").value;
-  signInWithEmailAndPassword(auth,email,password)
-    .then(userCredential=>{ showUser(userCredential.user); })
-    .catch(error=>showMessage(error.message));
-}
+  const q = query(collection(db, "users"), where("displayName", ">=", term), where("displayName", "<=", term + "\uf8ff"));
+  const querySnap = await getDocs(q);
 
-window.loginWithGoogle = function(){
-  signInWithPopup(auth, provider)
-    .then(async result=>{
-      await ensureUserDoc(result.user);
-      showUser(result.user);
-    })
-    .catch(error=>showMessage(error.message));
-}
-
-window.logout = function(){
-  signOut(auth).then(()=>{
-    document.getElementById("loginForm").style.display="block";
-    document.getElementById("welcome").style.display="none";
-    document.getElementById("friendsSection").style.display="none";
-  });
-}
-
-function showUser(user){
-  document.getElementById("loginForm").style.display="none";
-  document.getElementById("welcome").style.display="block";
-  document.getElementById("friendsSection").style.display="block";
-  document.getElementById("userDisplay").innerText=user.email;
-  document.getElementById("userPfp").src=user.photoURL || 'https://www.gravatar.com/avatar/?d=mp';
-  loadFriends(user.uid);
-}
-
-function showMessage(msg,color="red"){
-  const p=document.getElementById("message");
-  p.style.color=color;
-  p.innerText=msg;
-}
-
-async function loadFriends(uid){
-  const ref = doc(db,"users",uid);
-  const snap = await getDoc(ref);
-  if(snap.exists()){
-    const data = snap.data();
-    const list = document.getElementById("friendList");
-    list.innerHTML = "";
-    (data.friends || []).forEach(f=>{
-      const div = document.createElement("div");
-      div.className="friend";
-      div.innerHTML = `<img src="https://www.gravatar.com/avatar/?d=mp"><span>${f}</span>`;
-      list.appendChild(div);
-    });
-    document.getElementById("friendCount").innerText = data.friends.length;
-  }
-}
-
-window.searchUser = async function(){
-  const name=document.getElementById("friendSearchTop").value.trim();
-  if(!name) return;
-  const resultDiv=document.getElementById("searchResult");
-  resultDiv.innerHTML="<p>Searching...</p>";
-
-  const q=query(collection(db,"users"), where("displayName","==",name));
-  const snap=await getDocs(q);
-
-  resultDiv.innerHTML="";
-  if(snap.empty){
-    resultDiv.innerHTML="<p>No users found.</p>";
+  if(querySnap.empty){
+    resultsDiv.innerHTML = "<p>No users found.</p>";
     return;
   }
-  snap.forEach(docSnap=>{
-    const user=docSnap.data();
-    const div=document.createElement("div");
-    div.className="profileResult";
-    div.innerHTML=`
+
+  querySnap.forEach(doc=>{
+    const user = doc.data();
+    const card = document.createElement("div");
+    card.className = "profile-card";
+    card.innerHTML = `
       <img src="${user.photoURL || 'https://www.gravatar.com/avatar/?d=mp'}">
-      <span>${user.displayName}</span>
-      <button class="button" onclick="sendFriendRequest('${docSnap.id}','${user.displayName}')">Add Friend</button>
+      <h3>${user.displayName || "Unnamed"}</h3>
+      <p>${user.email || ""}</p>
     `;
-    resultDiv.appendChild(div);
+    resultsDiv.appendChild(card);
   });
-}
-
-window.sendFriendRequest = async function(uid,name){
-  const currentUser=auth.currentUser;
-  if(!currentUser) return;
-  const ref=doc(db,"users",currentUser.uid);
-  await updateDoc(ref,{ friends: arrayUnion(name) });
-  loadFriends(currentUser.uid);
-  document.getElementById("searchResult").innerHTML="<p>Friend added!</p>";
-}
-
-onAuthStateChanged(auth,user=>{
-  if(user) { ensureUserDoc(user).then(()=>showUser(user)); }
 });
 </script>
 
