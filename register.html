@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register - Boat Revival</title>
+<style>
+  body { font-family: Arial, sans-serif; background:#f2f2f2; display:flex; justify-content:center; align-items:center; height:100vh; }
+  .box { background:white; padding:30px; border-radius:10px; width:300px; box-shadow:0 0 10px rgba(0,0,0,0.2); text-align:center; }
+  input { width:100%; padding:10px; margin:10px 0; border:1px solid #ccc; border-radius:5px; }
+  button { background:#ff69b4; color:white; padding:10px; border:none; border-radius:5px; cursor:pointer; width:100%; }
+  button:hover { background:#ff1493; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <h2>Register</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button id="registerBtn">Register</button>
+    <p>Already have an account? <a href="login.html">Login</a></p>
+    <p><a href="index.html">Back to Home</a></p>
+  </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXSqKxgXxc7tBA",
+  authDomain: "boat-revival.firebaseapp.com",
+  projectId: "boat-revival",
+  storageBucket: "boat-revival.appspot.com",
+  messagingSenderId: "207519236382",
+  appId: "1:207519236382:web:3a61a1b8811fd811e0c90f"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+document.getElementById("registerBtn").onclick = async () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
+    alert("Registration successful!");
+    window.location.href = "index.html";
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+};
+</script>
+</body>
+</html>
