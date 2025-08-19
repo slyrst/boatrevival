@@ -1,87 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Boat Revival - Home</title>
-<style>
-  body { font-family: Arial, sans-serif; margin:0; padding:0; background:#fafafa; }
-  header { background:#ff69b4; padding:15px; color:white; display:flex; justify-content:space-between; align-items:center; }
-  header h1 { margin:0; font-size:22px; }
-  nav a, nav button {
-    margin-left:15px; 
-    text-decoration:none; 
-    color:white; 
-    font-weight:bold; 
-    background:none; 
-    border:none; 
-    cursor:pointer;
-    font-size:15px;
-  }
-  nav button:hover, nav a:hover { text-decoration:underline; }
-  main { padding:40px; text-align:center; }
-</style>
+  <meta charset="UTF-8">
+  <title>Boat Revival - Home</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module">
+    import { auth, signOut } from "./firebase.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+
+    const userName = document.getElementById("username");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+      } else {
+        userName.textContent = user.displayName || user.email;
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+    });
+  </script>
 </head>
 <body>
+  <header>
+    <nav class="navbar">
+      <h1>Boat Revival</h1>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="#friends">Friends</a></li>
+        <li>
+          <input type="text" placeholder="Search games/users...">
+        </li>
+        <li><a href="#profile">Profile</a></li>
+        <li><button id="logoutBtn">Logout</button></li>
+      </ul>
+    </nav>
+  </header>
 
-<header>
-  <h1>Boat Revival</h1>
-  <nav id="navLinks"><!-- JS inserts login/register or logout here --></nav>
-</header>
+  <main>
+    <section id="home">
+      <h2>Welcome, <span id="username"></span>!</h2>
+      <div class="games">
+        <h3>Popular Games</h3>
+        <div class="game-grid">
+          <div class="game-card">Game 1</div>
+          <div class="game-card">Game 2</div>
+          <div class="game-card">Game 3</div>
+        </div>
+      </div>
+    </section>
 
-<main>
-  <h2>Welcome to Boat Revival!</h2>
-  <p>A Roblox revival project with login, games, and more.</p>
-</main>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
-  authDomain: "boat-revival.firebaseapp.com",
-  projectId: "boat-revival",
-  storageBucket: "boat-revival.appspot.com",
-  messagingSenderId: "207519236382",
-  appId: "1:207519236382:web:3a61a1b8811fd811e0c90f"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-const nav = document.getElementById("navLinks");
-
-function renderNav(user) {
-  nav.innerHTML = "";
-  if (user) {
-    const welcome = document.createElement("span");
-    welcome.textContent = `Welcome, ${user.email}`;
-    
-    const logoutBtn = document.createElement("button");
-    logoutBtn.textContent = "Logout";
-    logoutBtn.onclick = () => signOut(auth);
-
-    nav.appendChild(welcome);
-    nav.appendChild(logoutBtn);
-  } else {
-    const loginLink = document.createElement("a");
-    loginLink.href = "login.html";
-    loginLink.textContent = "Sign In";
-
-    const registerLink = document.createElement("a");
-    registerLink.href = "register.html";
-    registerLink.textContent = "Register";
-
-    nav.appendChild(loginLink);
-    nav.appendChild(registerLink);
-  }
-}
-
-onAuthStateChanged(auth, (user) => {
-  renderNav(user);
-});
-</script>
-
+    <section id="friends">
+      <h3>Your Friends</h3>
+      <ul id="friendsList">
+        <li>Friend 1</li>
+        <li>Friend 2</li>
+        <li>Friend 3</li>
+      </ul>
+    </section>
+  </main>
 </body>
 </html>
