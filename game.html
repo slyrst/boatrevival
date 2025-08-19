@@ -445,6 +445,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            background: rgba(0, 0, 0, 0.7);
         }
         
         .online-status {
@@ -489,10 +490,10 @@
 </head>
 <body>
     <div id="status">Connecting to server...</div>
-    <div id="connectionStatus" class="connection-status" style="display: none;">
-        <span id="statusIndicator" class="offline-status"></span>
-        <span id="connectionText">Offline</span>
-        <button id="reconnectBtn" class="reconnect-btn">Reconnect</button>
+    <div id="connectionStatus" class="connection-status">
+        <span id="statusIndicator" class="online-status"></span>
+        <span id="connectionText">Online</span>
+        <button id="reconnectBtn" class="reconnect-btn" style="display: none;">Reconnect</button>
     </div>
     
     <div id="loadingOverlay" class="loading-overlay">
@@ -641,9 +642,10 @@
 
         // Initialize Firebase
         let auth, db;
-        let isOnline = false;
+        let isOnline = navigator.onLine;
         let connectionRetries = 0;
-        const maxRetries = 5;
+        const maxRetries = 3;
+        let firebaseInitialized = false;
         
         // DOM Elements
         const statusDiv = document.getElementById('status');
@@ -702,50 +704,48 @@
             updateStatus('Initializing game...');
             setupEventListeners();
             
-            // Initialize Firebase with retry logic
+            // Set initial connection status
+            updateConnectionStatus(navigator.onLine);
+            
+            // Initialize Firebase
             initializeFirebaseWithRetry();
             
             // Set up network status monitoring
-            window.addEventListener('online', handleOnlineStatus);
-            window.addEventListener('offline', handleOfflineStatus);
-            
-            // Check initial network status
-            if (navigator.onLine) {
+            window.addEventListener('online', () => {
+                isOnline = true;
                 handleOnlineStatus();
-            } else {
+            });
+            
+            window.addEventListener('offline', () => {
+                isOnline = false;
                 handleOfflineStatus();
-            }
+            });
         }
         
         // Initialize Firebase with retry logic
         function initializeFirebaseWithRetry() {
+            if (firebaseInitialized) return;
+            
             try {
                 firebase.initializeApp(firebaseConfig);
                 auth = firebase.auth();
                 db = firebase.firestore();
-                
-                // Enable offline persistence
-                db.enablePersistence()
-                  .then(() => {
-                      console.log('Offline persistence enabled');
-                      updateStatus('Offline mode enabled');
-                  })
-                  .catch((err) => {
-                      console.log('Offline persistence failed: ', err);
-                      updateStatus('Offline mode not available');
-                  });
+                firebaseInitialized = true;
                 
                 // Set up auth state listener
                 setupAuthStateListener();
                 
+                updateStatus('Firebase initialized successfully');
+                
             } catch (error) {
-                console.error('Firebase initialization error', error);
+                console.error('Firebase initialization error:', error);
                 if (connectionRetries < maxRetries) {
                     connectionRetries++;
                     updateStatus(`Retrying Firebase connection (${connectionRetries}/${maxRetries})...`);
                     setTimeout(initializeFirebaseWithRetry, 2000);
                 } else {
-                    showError('Failed to initialize Firebase after multiple attempts. Please refresh the page.');
+                    showError('Failed to initialize Firebase. Some features may not work.');
+                    hideLoading();
                 }
             }
         }
@@ -764,8 +764,10 @@
                     updateStatus('Logged in as ' + gameState.playerName);
                     gameState.connected = true;
                     
-                    // Load servers
-                    loadServers();
+                    // Load servers only if online
+                    if (isOnline) {
+                        loadServers();
+                    }
                     
                     // Load singleplayer worlds
                     loadSingleplayerWorlds();
@@ -788,29 +790,35 @@
             });
         }
         
+        // Update connection status display
+        function updateConnectionStatus(online) {
+            isOnline = online;
+            if (online) {
+                statusIndicator.className = 'online-status';
+                connectionText.textContent = 'Online';
+                reconnectBtn.style.display = 'none';
+            } else {
+                statusIndicator.className = 'offline-status';
+                connectionText.textContent = 'Offline';
+                reconnectBtn.style.display = 'inline-block';
+            }
+        }
+        
         // Handle online status
         function handleOnlineStatus() {
-            isOnline = true;
-            statusIndicator.className = 'online-status';
-            connectionText.textContent = 'Online';
-            connectionStatus.style.display = 'flex';
+            updateConnectionStatus(true);
             updateStatus('Connection restored');
             
-            // Try to reconnect if needed
-            if (!gameState.connected && auth) {
-                updateStatus('Reconnecting...');
-                // Force auth state check
-                auth.currentUser?.reload();
+            // Try to reload servers if we're logged in
+            if (gameState.connected && auth.currentUser) {
+                loadServers();
             }
         }
         
         // Handle offline status
         function handleOfflineStatus() {
-            isOnline = false;
-            statusIndicator.className = 'offline-status';
-            connectionText.textContent = 'Offline';
-            connectionStatus.style.display = 'flex';
-            updateStatus('Connection lost - working offline');
+            updateConnectionStatus(false);
+            updateStatus('Working offline');
         }
         
         // Show error message
@@ -895,726 +903,17 @@
             window.addEventListener('keyup', handleKeyUp);
         }
         
-        // Attempt to reconnect to Firebase
+        // Attempt to reconnect
         function attemptReconnection() {
             updateStatus('Attempting to reconnect...');
+            
+            // Reset retry counter and try Firebase again
             connectionRetries = 0;
-            initializeFirebaseWithRetry();
-        }
-        
-        // Handle keyboard input
-        function handleKeyDown(e) {
-            if (gameState.players[gameState.playerId]) {
-                gameState.players[gameState.playerId].keys = gameState.players[gameState.playerId].keys || {};
-                gameState.players[gameState.playerId].keys[e.key.toLowerCase()] = true;
-            }
-        }
-        
-        function handleKeyUp(e) {
-            if (gameState.players[gameState.playerId]) {
-                gameState.players[gameState.playerId].keys = gameState.players[gameState.playerId].keys || {};
-                gameState.players[gameState.playerId].keys[e.key.toLowerCase()] = false;
-            }
-        }
-        
-        // Register a new user
-        function register() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const displayName = document.getElementById('displayName').value;
             
-            if (!email || !password) {
-                showLoginError('Please enter email and password');
-                return;
-            }
-            
-            if (password.length < 6) {
-                showLoginError('Password should be at least 6 characters');
-                return;
-            }
-            
-            if (!isOnline) {
-                showLoginError('Cannot register while offline');
-                return;
-            }
-            
-            updateStatus('Registering new account...');
-            
-            auth.createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    // Signed in
-                    const user = userCredential.user;
-                    
-                    // Update profile with display name
-                    return user.updateProfile({
-                        displayName: displayName || email
-                    });
-                })
-                .then(() => {
-                    updateStatus('Registration successful!');
-                    loginError.style.display = 'none';
-                })
-                .catch((error) => {
-                    updateStatus('Registration failed');
-                    showLoginError('Registration failed: ' + error.message);
-                });
-        }
-        
-        // Login existing user
-        function login() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            if (!email || !password) {
-                showLoginError('Please enter email and password');
-                return;
-            }
-            
-            if (!isOnline) {
-                showLoginError('Cannot login while offline');
-                return;
-            }
-            
-            updateStatus('Logging in...');
-            
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    // Signed in
-                    updateStatus('Login successful!');
-                    loginError.style.display = 'none';
-                })
-                .catch((error) => {
-                    updateStatus('Login failed');
-                    showLoginError('Login failed: ' + error.message);
-                });
-        }
-        
-        // Logout of the game
-        function logout() {
-            // Clean up listeners
-            gameState.unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
-            gameState.unsubscribeFunctions = [];
-            
-            // Remove player from server
-            if (gameState.currentServer && isOnline) {
-                db.collection('servers').doc(gameState.currentServer).collection('players').doc(gameState.playerId).delete()
-                    .catch(error => console.error('Error removing player:', error));
-            }
-            
-            // Sign out
-            auth.signOut().then(() => {
-                gameState.connected = false;
-                gameScreen.style.display = 'none';
-                loginScreen.style.display = 'flex';
-                updateStatus('Signed out successfully');
-                
-                // Reset game state
-                gameState.players = {};
-                gameState.currentServer = null;
-            }).catch((error) => {
-                updateStatus('Sign out error: ' + error.message);
-            });
-        }
-        
-        // Load available servers
-        function loadServers() {
-            serversList.innerHTML = '';
-            updateStatus('Loading servers...');
-            
-            // Add the official World1 server
-            const officialServer = document.createElement('div');
-            officialServer.className = 'server-item';
-            officialServer.innerHTML = `
-                <div class="server-info">
-                    <div class="server-name">World 1 (Official)</div>
-                    <div class="server-players">0 players online</div>
-                </div>
-                <button class="server-join" data-server="official_world1">Join</button>
-            `;
-            serversList.appendChild(officialServer);
-            
-            if (!isOnline) {
-                updateStatus('Cannot load servers while offline');
-                return;
-            }
-            
-            // Load other servers from Firebase
-            db.collection('servers').get().then((querySnapshot) => {
-                querySnapshot.forEach((doc) => {
-                    if (doc.id !== 'official_world1') {
-                        const serverData = doc.data();
-                        const serverItem = document.createElement('div');
-                        serverItem.className = 'server-item';
-                        serverItem.innerHTML = `
-                            <div class="server-info">
-                                <div class="server-name">${serverData.name}</div>
-                                <div class="server-players">${serverData.playerCount || 0} players online</div>
-                            </div>
-                            <button class="server-join" data-server="${doc.id}">Join</button>
-                        `;
-                        serversList.appendChild(serverItem);
-                    }
-                });
-                updateStatus('Servers loaded');
-            }).catch((error) => {
-                console.error('Error loading servers:', error);
-                updateStatus('Failed to load servers');
-            });
-        }
-        
-        // Load singleplayer worlds
-        function loadSingleplayerWorlds() {
-            const worldsList = document.getElementById('worldsList');
-            worldsList.innerHTML = '';
-            
-            // Load from localStorage
-            const worlds = JSON.parse(localStorage.getItem('boatCubeWorlds') || '{}');
-            
-            if (Object.keys(worlds).length === 0) {
-                worldsList.innerHTML = '<p style="color: #aaa; text-align: center; padding: 20px;">No worlds created yet</p>';
-                return;
-            }
-            
-            for (const worldName in worlds) {
-                const world = worlds[worldName];
-                const worldItem = document.createElement('div');
-                worldItem.className = 'world-item';
-                worldItem.innerHTML = `
-                    <div class="world-name">${worldName}</div>
-                    <div class="world-info">${world.mapWidth}x${world.mapHeight} - Last played: ${new Date(world.lastPlayed).toLocaleDateString()}</div>
-                `;
-                
-                worldItem.addEventListener('click', () => {
-                    loadSingleplayerWorld(worldName);
-                });
-                
-                worldsList.appendChild(worldItem);
-            }
-        }
-        
-        // Create a new server
-        function createServer() {
-            const serverName = document.getElementById('serverName').value;
-            if (!serverName) {
-                alert('Please enter a server name');
-                return;
-            }
-            
-            if (!isOnline) {
-                alert('Cannot create server while offline');
-                return;
-            }
-            
-            updateStatus('Creating server: ' + serverName);
-            
-            const serverId = 'server_' + Date.now();
-            
-            db.collection('servers').doc(serverId).set({
-                name: serverName,
-                created: firebase.firestore.FieldValue.serverTimestamp(),
-                creator: gameState.playerId,
-                creatorName: gameState.playerName
-            }).then(() => {
-                updateStatus('Server created: ' + serverName);
-                joinServer(serverId);
-            }).catch((error) => {
-                updateStatus('Server creation failed: ' + error.message);
-                alert('Failed to create server: ' + error.message);
-            });
-        }
-        
-        // Create a new world
-        function createWorld() {
-            const worldName = document.getElementById('worldName').value;
-            if (!worldName) {
-                alert('Please enter a world name');
-                return;
-            }
-            
-            const size = document.getElementById('worldSize').value;
-            let width, height;
-            
-            switch(size) {
-                case 'small': width = height = 30; break;
-                case 'medium': width = height = 50; break;
-                case 'large': width = height = 80; break;
-                case 'huge': width = height = 120; break;
-            }
-            
-            updateStatus('Creating world: ' + worldName);
-            
-            // Create world data
-            const worldData = {
-                mapWidth: width,
-                mapHeight: height,
-                mapData: generateMapData(width, height),
-                playerX: Math.random() * (width * 50 - 50),
-                playerY: Math.random() * (height * 50 - 50),
-                playerColor: getRandomColor(),
-                created: Date.now(),
-                lastPlayed: Date.now()
-            };
-            
-            // Save to localStorage
-            const worlds = JSON.parse(localStorage.getItem('boatCubeWorlds') || '{}';
-            worlds[worldName] = worldData;
-            localStorage.setItem('boatCubeWorlds', JSON.stringify(worlds));
-            
-            updateStatus('World created: ' + worldName);
-            loadSingleplayerWorlds();
-        }
-        
-        // Generate map data
-        function generateMapData(width, height) {
-            const data = [];
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    let rand = Math.random();
-                    let type = 'grass';
-                    
-                    if (rand < 0.12) type = 'dirt';
-                    else if (rand < 0.08) type = 'tree';
-                    else if (rand < 0.04) type = 'rock';
-                    else if (rand < 0.02) type = 'water';
-                    
-                    data.push(type);
+            // Check if we're actually online
+            if (navigator.onLine) {
+                handleOnlineStatus();
+                if (auth && auth.currentUser) {
+                    loadServers();
                 }
-            }
-            return data;
-        }
-        
-        // Load singleplayer world
-        function loadSingleplayerWorld(worldName) {
-            const worlds = JSON.parse(localStorage.getItem('boatCubeWorlds') || '{}');
-            const worldData = worlds[worldName];
-            
-            if (!worldData) {
-                alert('World not found');
-                return;
-            }
-            
-            updateStatus('Loading world: ' + worldName);
-            
-            // Set game mode to singleplayer
-            gameState.currentServer = null;
-            gameState.players = {};
-            gameState.gameMode = 'singleplayer';
-            
-            // Store map data
-            gameState.mapData = worldData.mapData;
-            gameState.mapWidth = worldData.mapWidth;
-            gameState.mapHeight = worldData.mapHeight;
-            
-            // Create player
-            gameState.players[gameState.playerId] = {
-                id: gameState.playerId,
-                name: gameState.playerName,
-                color: worldData.playerColor || getRandomColor(),
-                x: worldData.playerX || Math.random() * (worldData.mapWidth * 50 - 50),
-                y: worldData.playerY || Math.random() * (worldData.mapHeight * 50 - 50),
-                score: 0
-            };
-            
-            // Update world last played
-            worldData.lastPlayed = Date.now();
-            worlds[worldName] = worldData;
-            localStorage.setItem('boatCubeWorlds', JSON.stringify(worlds));
-            
-            updateStatus('Playing in ' + worldName);
-            addChatMessage('System', 'Entered world: ' + worldName);
-        }
-        
-        // Join a server
-        function joinServer(serverId) {
-            if (!isOnline) {
-                // Use a more reliable check for online status
-                checkOnlineStatus().then(online => {
-                    if (online) {
-                        // If we're actually online, try joining again
-                        isOnline = true;
-                        handleOnlineStatus();
-                        performServerJoin(serverId);
-                    } else {
-                        alert('Cannot join server while offline. Please check your internet connection.');
-                    }
-                });
-                return;
-            }
-            
-            performServerJoin(serverId);
-        }
-        
-        // Perform the actual server join operation
-        function performServerJoin(serverId) {
-            updateStatus('Joining server...');
-            
-            // Clean up previous listeners
-            gameState.unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
-            gameState.unsubscribeFunctions = [];
-            
-            // Set current server
-            gameState.currentServer = serverId;
-            gameState.gameMode = 'multiplayer';
-            
-            // Get server info
-            db.collection('servers').doc(serverId).get().then((doc) => {
-                if (doc.exists) {
-                    const serverData = doc.data();
-                    updateStatus('Joining ' + (serverData.name || serverId));
-                    
-                    // Add player to server
-                    const playerData = {
-                        name: gameState.playerName,
-                        x: Math.random() * gameState.world.width,
-                        y: Math.random() * gameState.world.height,
-                        color: gameState.playerColor,
-                        score: 0,
-                        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-                    
-                    return db.collection('servers').doc(serverId).collection('players').doc(gameState.playerId).set(playerData);
-                } else {
-                    // Create the server if it doesn't exist (for official_world1)
-                    return db.collection('servers').doc(serverId).set({
-                        name: 'Official World 1',
-                        created: firebase.firestore.FieldValue.serverTimestamp(),
-                        isOfficial: true
-                    }).then(() => {
-                        return db.collection('servers').doc(serverId).collection('players').doc(gameState.playerId).set({
-                            name: gameState.playerName,
-                            x: Math.random() * gameState.world.width,
-                            y: Math.random() * gameState.world.height,
-                            color: gameState.playerColor,
-                            score: 0,
-                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    });
-                }
-            }).then(() => {
-                // Listen for players in this server
-                const unsubscribePlayers = db.collection('servers').doc(serverId).collection('players')
-                    .onSnapshot((snapshot) => {
-                        snapshot.docChanges().forEach((change) => {
-                            const playerId = change.doc.id;
-                            const playerData = change.doc.data();
-                            
-                            if (change.type === 'added' || change.type === 'modified') {
-                                gameState.players[playerId] = {
-                                    ...playerData,
-                                    id: playerId
-                                };
-                            } else if (change.type === 'removed') {
-                                delete gameState.players[playerId];
-                            }
-                        });
-                        
-                        updatePlayersList();
-                    }, (error) => {
-                        console.error('Players listener error:', error);
-                        if (error.code === 'failed-precondition') {
-                            updateStatus('Cannot access server while offline');
-                        }
-                    });
-                
-                gameState.unsubscribeFunctions.push(unsubscribePlayers);
-                
-                // Listen for chat messages in this server
-                const unsubscribeChat = db.collection('servers').doc(serverId).collection('chat')
-                    .orderBy('timestamp', 'asc')
-                    .onSnapshot((snapshot) => {
-                        snapshot.docChanges().forEach((change) => {
-                            if (change.type === 'added') {
-                                const message = change.doc.data();
-                                addChatMessage(message.sender, message.text);
-                            }
-                        });
-                    }, (error) => {
-                        console.error('Chat listener error:', error);
-                    });
-                
-                gameState.unsubscribeFunctions.push(unsubscribeChat);
-                
-                updateStatus('Connected to server');
-                addChatMessage('System', 'Joined server');
-            }).catch((error) => {
-                let errorMsg = 'Failed to join server: ';
-                if (error.code === 'unavailable' || error.message.includes('offline')) {
-                    errorMsg += 'You are offline. Please check your internet connection.';
-                    isOnline = false;
-                    handleOfflineStatus();
-                } else {
-                    errorMsg += error.message;
-                }
-                
-                updateStatus(errorMsg);
-                alert(errorMsg);
-            });
-        }
-        
-        // More reliable online status check
-        function checkOnlineStatus() {
-            return new Promise((resolve) => {
-                // First check the navigator status
-                if (!navigator.onLine) {
-                    resolve(false);
-                    return;
-                }
-                
-                // Then try to fetch a small resource from Firebase
-                const timeout = setTimeout(() => {
-                    resolve(false);
-                }, 3000);
-                
-                fetch('https://firestore.googleapis.com/$discovery/rest?version=v1')
-                    .then(() => {
-                        clearTimeout(timeout);
-                        resolve(true);
-                    })
-                    .catch(() => {
-                        clearTimeout(timeout);
-                        resolve(false);
-                    });
-            });
-        }
-        
-        // Send chat message
-        function sendChatMessage() {
-            if (!gameState.currentServer) {
-                alert('You need to join a server first!');
-                return;
-            }
-            
-            if (!isOnline) {
-                alert('Cannot send messages while offline');
-                return;
-            }
-            
-            const chatInput = document.getElementById('chatInput');
-            const message = chatInput.value.trim();
-            
-            if (message !== '') {
-                db.collection('servers').doc(gameState.currentServer).collection('chat').add({
-                    sender: gameState.playerName,
-                    text: message,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                }).catch((error) => {
-                    console.error('Error sending message:', error);
-                    alert('Failed to send message: ' + error.message);
-                });
-                
-                chatInput.value = '';
-            }
-        }
-        
-        // Add message to chat
-        function addChatMessage(sender, message) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message';
-            messageDiv.innerHTML = `<span class="message-sender">${sender}:</span> <span>${message}</span>`;
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-        
-        // Update players list
-        function updatePlayersList() {
-            playersList.innerHTML = '';
-            let count = 0;
-            
-            for (const id in gameState.players) {
-                const player = gameState.players[id];
-                const isCurrentPlayer = id === gameState.playerId;
-                
-                const playerItem = document.createElement('div');
-                playerItem.className = 'player-item';
-                playerItem.innerHTML = `
-                    <span><span class="player-color" style="background: ${player.color};"></span>${isCurrentPlayer ? 'You' : player.name}</span>
-                    <span>Score: ${player.score}</span>
-                `;
-                
-                playersList.appendChild(playerItem);
-                count++;
-            }
-            
-            playersCount.textContent = count;
-        }
-        
-        // Update player position in Firebase
-        function updatePlayerPosition() {
-            if (!gameState.currentServer || !gameState.players[gameState.playerId] || !isOnline) return;
-            
-            const player = gameState.players[gameState.playerId];
-            
-            db.collection('servers').doc(gameState.currentServer).collection('players').doc(gameState.playerId).update({
-                x: player.x,
-                y: player.y,
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            }).catch((error) => {
-                console.error('Error updating player position:', error);
-            });
-        }
-        
-        // Get a random color
-        function getRandomColor() {
-            return '#' + Math.floor(Math.random()*16777215).toString(16);
-        }
-        
-        // Render map for singleplayer mode
-        function renderMap(cameraX, cameraY) {
-            if (!gameState.mapData || gameState.gameMode !== 'singleplayer') return;
-            
-            const tileSize = 50;
-            const startX = Math.max(0, Math.floor(cameraX / tileSize));
-            const startY = Math.max(0, Math.floor(cameraY / tileSize));
-            const endX = Math.min(gameState.mapWidth, startX + Math.ceil(gameCanvas.width / tileSize) + 1);
-            const endY = Math.min(gameState.mapHeight, startY + Math.ceil(gameCanvas.height / tileSize) + 1);
-            
-            for (let y = startY; y < endY; y++) {
-                for (let x = startX; x < endX; x++) {
-                    const tileIndex = y * gameState.mapWidth + x;
-                    const tileType = gameState.mapData[tileIndex];
-                    const tileX = x * tileSize - cameraX;
-                    const tileY = y * tileSize - cameraY;
-                    
-                    // Only draw if tile is in view
-                    if (tileX > -tileSize && tileX < gameCanvas.width && tileY > -tileSize && tileY < gameCanvas.height) {
-                        ctx.fillStyle = tileColors[tileType] || tileColors.grass;
-                        ctx.fillRect(tileX, tileY, tileSize, tileSize);
-                        
-                        // Add some details to certain tiles
-                        if (tileType === 'tree') {
-                            ctx.fillStyle = '#2E7D32';
-                            ctx.beginPath();
-                            ctx.arc(tileX + tileSize/2, tileY + tileSize/3, tileSize/3, 0, Math.PI * 2);
-                            ctx.fill();
-                            ctx.fillStyle = '#5D4037';
-                            ctx.fillRect(tileX + tileSize/2 - 5, tileY + tileSize/2, 10, tileSize/2);
-                        } else if (tileType === 'rock') {
-                            ctx.fillStyle = '#757575';
-                            ctx.beginPath();
-                            ctx.arc(tileX + tileSize/2, tileY + tileSize/2, tileSize/4, 0, Math.PI * 2);
-                            ctx.fill();
-                        } else if (tileType === 'water') {
-                            ctx.fillStyle = '#1976D2';
-                            ctx.fillRect(tileX, tileY, tileSize, tileSize);
-                            // Add wave effect
-                            ctx.strokeStyle = '#64B5F6';
-                            ctx.lineWidth = 2;
-                            ctx.beginPath();
-                            ctx.arc(tileX + tileSize/2, tileY + tileSize/2, tileSize/3, 0, Math.PI * 2);
-                            ctx.stroke();
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Game loop
-        function gameLoop() {
-            if (gameState.connected) {
-                update();
-                render();
-            }
-            
-            requestAnimationFrame(gameLoop);
-        }
-        
-        // Update game state
-        function update() {
-            const player = gameState.players[gameState.playerId];
-            if (!player) return;
-            
-            // Handle player movement
-            const speed = 5;
-            
-            if (player.keys && (player.keys['w'] || player.keys['arrowup'])) player.y -= speed;
-            if (player.keys && (player.keys['s'] || player.keys['arrowdown'])) player.y += speed;
-            if (player.keys && (player.keys['a'] || player.keys['arrowleft'])) player.x -= speed;
-            if (player.keys && (player.keys['d'] || player.keys['arrowright'])) player.x += speed;
-            
-            // Keep player within world bounds
-            if (gameState.gameMode === 'singleplayer') {
-                player.x = Math.max(0, Math.min(gameState.mapWidth * 50 - 50, player.x));
-                player.y = Math.max(0, Math.min(gameState.mapHeight * 50 - 50, player.y));
             } else {
-                player.x = Math.max(0, Math.min(gameState.world.width, player.x));
-                player.y = Math.max(0, Math.min(gameState.world.height, player.y));
-            }
-            
-            // Update player position in Firebase periodically
-            if (gameState.currentServer && isOnline && Math.random() > 0.95) {
-                updatePlayerPosition();
-            }
-        }
-        
-        // Render the game
-        function render() {
-            // Clear canvas
-            ctx.fillStyle = '#222';
-            ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
-            
-            const player = gameState.players[gameState.playerId];
-            if (!player) return;
-            
-            // Calculate camera offset
-            const cameraX = player.x - gameCanvas.width / 2;
-            const cameraY = player.y - gameCanvas.height / 2;
-            
-            // Draw grid background for multiplayer
-            if (gameState.gameMode === 'multiplayer') {
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 1;
-                
-                const gridSize = 50;
-                const startX = Math.floor(cameraX / gridSize) * gridSize;
-                const startY = Math.floor(cameraY / gridSize) * gridSize;
-                
-                for (let x = startX; x < cameraX + gameCanvas.width; x += gridSize) {
-                    ctx.beginPath();
-                    ctx.moveTo(x - cameraX, 0);
-                    ctx.lineTo(x - cameraX, gameCanvas.height);
-                    ctx.stroke();
-                }
-                
-                for (let y = startY; y < cameraY + gameCanvas.height; y += gridSize) {
-                    ctx.beginPath();
-                    ctx.moveTo(0, y - cameraY);
-                    ctx.lineTo(gameCanvas.width, y - cameraY);
-                    ctx.stroke();
-                }
-            } else if (gameState.gameMode === 'singleplayer') {
-                // Draw map for singleplayer
-                renderMap(cameraX, cameraY);
-            }
-            
-            // Draw players
-            for (const id in gameState.players) {
-                const p = gameState.players[id];
-                const isCurrentPlayer = id === gameState.playerId;
-                
-                const x = p.x - cameraX;
-                const y = p.y - cameraY;
-                
-                // Only draw if player is in view
-                if (x > -50 && x < gameCanvas.width + 50 && y > -50 && y < gameCanvas.height + 50) {
-                    // Draw player
-                    ctx.fillStyle = p.color;
-                    ctx.fillRect(x - 20, y - 20, 40, 40);
-                    
-                    // Draw player name
-                    ctx.fillStyle = 'white';
-                    ctx.font = '14px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(isCurrentPlayer ? 'You' : p.name, x, y - 30);
-                    
-                    // Draw score
-                    ctx.font = '12px Arial';
-                    ctx.fillText(`Score: ${p.score}`, x, y + 50);
-                }
-            }
-        }
-        
-        // Initialize the game
-        init();
-    </script>
-</body>
-</html>
