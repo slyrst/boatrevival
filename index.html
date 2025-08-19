@@ -1,66 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Boat Revival - Home</title>
-  <link rel="stylesheet" href="style.css">
-  <script type="module">
-    import { auth, signOut } from "./firebase.js";
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-
-    const userName = document.getElementById("username");
-    const logoutBtn = document.getElementById("logoutBtn");
-
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location.href = "login.html";
-      } else {
-        userName.textContent = user.displayName || user.email;
-      }
-    });
-
-    logoutBtn.addEventListener("click", async () => {
-      await signOut(auth);
-    });
-  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boat Revival</title>
+<style>
+  body { margin:0; font-family: Arial, sans-serif; background: linear-gradient(180deg,#fce4ec,#fff); color:#333; }
+  header { background: #ff69b4; color: white; padding: 15px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+  header h1 { margin:0; font-size:1.5em; }
+  .search-bar { display: flex; gap: 5px; flex-wrap: wrap; }
+  .search-bar input { padding: 6px; border-radius: 6px; border: none; width: 200px; max-width: 50vw; }
+  .search-bar button { padding:6px 12px; background:white; color:#ff69b4; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
+  .search-bar button:hover { background:#ffe6f0; }
+  nav { display: flex; gap:10px; flex-wrap: wrap; margin-top:5px; }
+  nav button, nav a { background: white; border: none; padding: 8px 15px; border-radius: 8px; color: #ff69b4; font-weight:bold; cursor:pointer; text-decoration:none; }
+  nav button:hover, nav a:hover { background:#ffe6f0; }
+  main { padding:20px; max-width:1000px; margin:auto; }
+  .greeting { text-align:center; margin-bottom:20px; }
+  .greeting img { width:80px; height:80px; border-radius:50%; margin-bottom:10px; }
+  section { margin:20px 0; }
+  h2 { border-bottom:2px solid #ff69b4; padding-bottom:5px; margin-bottom:10px; }
+  .card-container { display:flex; gap:15px; overflow-x:auto; padding-bottom:10px; }
+  .card { min-width:150px; background:white; padding:10px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); text-align:center; flex-shrink:0; }
+  .card img { width:100%; border-radius:8px; margin-bottom:8px; }
+  .card button { margin-top:5px; background:#ff69b4; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold; }
+  .card button:hover { background:#ff4c99; }
+  footer { background:#ff69b4; color:white; text-align:center; padding:10px; margin-top:30px; }
+  @media (max-width:600px){ header{ flex-direction:column; align-items:flex-start; } .card-container{ gap:10px; } }
+</style>
 </head>
 <body>
-  <header>
-    <nav class="navbar">
-      <h1>Boat Revival</h1>
-      <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="#friends">Friends</a></li>
-        <li>
-          <input type="text" placeholder="Search games/users...">
-        </li>
-        <li><a href="#profile">Profile</a></li>
-        <li><button id="logoutBtn">Logout</button></li>
-      </ul>
-    </nav>
-  </header>
 
-  <main>
-    <section id="home">
-      <h2>Welcome, <span id="username"></span>!</h2>
-      <div class="games">
-        <h3>Popular Games</h3>
-        <div class="game-grid">
-          <div class="game-card">Game 1</div>
-          <div class="game-card">Game 2</div>
-          <div class="game-card">Game 3</div>
-        </div>
-      </div>
-    </section>
+<header>
+  <h1>Boat Revival</h1>
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search users...">
+    <button onclick="searchUser()">Search</button>
+  </div>
+  <nav id="navBtns"></nav>
+</header>
 
-    <section id="friends">
-      <h3>Your Friends</h3>
-      <ul id="friendsList">
-        <li>Friend 1</li>
-        <li>Friend 2</li>
-        <li>Friend 3</li>
-      </ul>
-    </section>
-  </main>
+<main>
+  <div class="greeting" id="greeting">
+    <h2>Welcome to Boat Revival</h2>
+    <p>Loading user...</p>
+  </div>
+
+  <section id="searchResultsSection" style="display:none;">
+    <h2>Search Results</h2>
+    <div class="card-container" id="searchResults"></div>
+  </section>
+
+  <section>
+    <h2>Popular Games</h2>
+    <div class="card-container" id="games">
+      <div class="card"><p>Loading games...</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Friends</h2>
+    <div class="card-container" id="friends">
+      <div class="card"><p>Loading friends...</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>News</h2>
+    <div class="card-container" id="news">
+      <div class="card"><p>Loading news...</p></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  &copy; 2025 Boat Revival
+</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, query, where, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
+  authDomain: "boat-revival.firebaseapp.com",
+  projectId: "boat-revival",
+  storageBucket: "boat-revival.appspot.com",
+  messagingSenderId: "207519236382",
+  appId: "1:207519236382:web:3a61a1b8811fd811e0c90f"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const navBtns = document.getElementById("navBtns");
+const greeting = document.getElementById("greeting");
+const gamesDiv = document.getElementById("games");
+const friendsDiv = document.getElementById("friends");
+const newsDiv = document.getElementById("news");
+const searchResultsSection = document.getElementById("searchResultsSection");
+const searchResultsDiv = document.getElementById("searchResults");
+
+let currentUser;
+
+// Load Games
+async function loadGames(){
+  gamesDiv.innerHTML = "";
+  const snap = await getDocs(collection(db, "games"));
+  if(snap.empty){ gamesDiv.innerHTML = "<div class='card'><p>No games yet.</p></div>"; return; }
+  snap.forEach(doc=>{
+    const game = doc.data();
+    gamesDiv.innerHTML += `<div class="card"><img src="${game.thumbnail||'https://placehold.co/150x100'}" alt="Game"><p>${game.name}</p></div>`;
+  });
+}
+
+// Load Friends
+async function loadFriends(user){
+  friendsDiv.innerHTML = "";
+  const snap = await getDocs(query(collection(db, "friends"), where("uid", "==", user.uid)));
+  if(snap.empty){ friendsDiv.innerHTML = "<div class='card'><p>No friends yet.</p></div>"; return; }
+  snap.forEach(doc=>{
+    const friend = doc.data();
+    friendsDiv.innerHTML += `<div class="card"><img src="${friend.avatar||'https://www.gravatar.com/avatar/?d=mp'}" alt="Friend"><p>${friend.name}</p></div>`;
+  });
+}
+
+// Load News
+async function loadNews(){
+  newsDiv.innerHTML = "";
+  const snap = await getDocs(collection(db, "news"));
+  if(snap.empty){ newsDiv.innerHTML = "<div class='card'><p>No news yet.</p></div>"; return; }
+  snap.forEach(doc=>{
+    const item = doc.data();
+    newsDiv.innerHTML += `<div class="card"><p><b>${item.title}</b><br>${item.text}</p></div>`;
+  });
+}
+
+// Search Users
+window.searchUser = async function(){
+  const input = document.getElementById("searchInput").value.trim();
+  if(!input) return alert("Enter a username");
+  searchResultsDiv.innerHTML = "";
+  const usersRef = collection(db, "users");
+  const q = query(usersRef, where("displayName", "==", input));
+  const snap = await getDocs(q);
+  searchResultsSection.style.display = "block";
+  if(snap.empty){ searchResultsDiv.innerHTML = "<div class='card'><p>No user found.</p></div>"; return; }
+  snap.forEach(doc=>{
+    const data = doc.data();
+    if(data.uid === currentUser?.uid) return; // skip self
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `<img src="${data.avatar||'https://www.gravatar.com/avatar/?d=mp'}"><p>${data.displayName}</p>`;
+    const btn = document.createElement("button");
+    btn.innerText = "Add Friend";
+    btn.onclick = async function(){
+      btn.disabled = true;
+      btn.innerText = "Requested";
+      await addDoc(collection(db, "friendRequests"), {from: currentUser.uid, to: data.uid, status:"pending"});
+    };
+    card.appendChild(btn);
+    searchResultsDiv.appendChild(card);
+  });
+}
+
+// User state
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  if (user) {
+    greeting.innerHTML = `<img src="${user.photoURL||'https://www.gravatar.com/avatar/?d=mp'}" alt="Profile"><h2>Hi, ${user.displayName||'User'}!</h2><p>${user.email}</p>`;
+    navBtns.innerHTML = `<a href="index.html">Home</a><a href="account.html">Account</a><button onclick="logout()">Logout</button>`;
+    loadFriends(user);
+  } else {
+    greeting.innerHTML = `<h2>Welcome to Boat Revival</h2><p>Please login or register.</p>`;
+    navBtns.innerHTML = `<a href="login.html">Login</a><a href="register.html">Register</a>`;
+    friendsDiv.innerHTML = "<div class='card'><p>Login to see friends.</p></div>";
+  }
+  loadGames();
+  loadNews();
+});
+
+window.logout = function(){
+  signOut(auth).then(()=>{ window.location.href="index.html"; });
+}
+</script>
+
 </body>
 </html>
