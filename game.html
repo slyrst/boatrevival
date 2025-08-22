@@ -259,7 +259,7 @@
             </div>
             <div style="text-align: center;">
                 <button class="btn btn-create" id="createBtn">Create World</button>
-                <button class="btn" onclick="loadRooms()">Refresh Rooms</button>
+                <button class="btn" id="refreshBtn">Refresh Rooms</button>
             </div>
             <div id="statusBar" class="status-bar">Connecting to server...</div>
             <div class="rooms-container">
@@ -315,6 +315,9 @@
         const playerCount = document.getElementById("playerCount");
         const playersList = document.getElementById("playersList");
         const playersContent = document.getElementById("playersContent");
+        const refreshBtn = document.getElementById("refreshBtn");
+        const playerNameInput = document.getElementById("playerName");
+        const worldNameInput = document.getElementById("worldName");
 
         // ---------- Game Variables ----------
         let currentRoom = null;
@@ -333,6 +336,7 @@
         let camera = { x: 0, y: 0 };
         let lastPlayerFetch = 0;
         let lastPositionUpdate = 0;
+        let positionUpdatePending = false;
         
         // Map configuration
         const mapWidth = 2000;
@@ -366,12 +370,27 @@
 
         // ---------- Input Handling ----------
         window.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
-            e.preventDefault();
+            // Only prevent default for movement keys, not when typing in inputs
+            if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(e.key.toLowerCase()) &&
+                document.activeElement !== playerNameInput && 
+                document.activeElement !== worldNameInput) {
+                keys[e.key.toLowerCase()] = true;
+                e.preventDefault();
+            } else {
+                // Allow normal typing in inputs
+                keys[e.key.toLowerCase()] = true;
+            }
         });
 
         window.addEventListener('keyup', (e) => {
             keys[e.key.toLowerCase()] = false;
+            
+            // Don't prevent default for input fields
+            if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(e.key.toLowerCase()) &&
+                document.activeElement !== playerNameInput && 
+                document.activeElement !== worldNameInput) {
+                e.preventDefault();
+            }
         });
 
         window.addEventListener('resize', () => {
@@ -528,7 +547,7 @@
                                 Created by ${room.created_by}
                             </div>
                         </div>
-                        <button class="btn btn-join" onclick="joinRoom(${room.id}, '${room.name.replace(/'/g, "\\'")}', '${room.map_type}')">
+                        <button class="btn btn-join" data-room-id="${room.id}" data-room-name="${room.name.replace(/"/g, '&quot;')}" data-room-type="${room.map_type}">
                             Join
                         </button>
                     `;
@@ -536,11 +555,24 @@
                     roomsList.appendChild(roomCard);
                 });
                 
+                // Add event listeners to all join buttons
+                document.querySelectorAll('.btn-join').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const roomId = e.target.getAttribute('data-room-id');
+                        const roomName = e.target.getAttribute('data-room-name');
+                        const roomType = e.target.getAttribute('data-room-type');
+                        joinRoom(roomId, roomName, roomType);
+                    });
+                });
+                
                 statusBar.textContent = `Found ${data.length} world(s). Choose one to join!`;
             } catch (error) {
                 statusBar.textContent = "Connection error: " + error.message;
             }
         }
+
+        // Add event listener to refresh button
+        refreshBtn.addEventListener('click', loadRooms);
 
         // Load rooms on startup and refresh every 5 seconds
         loadRooms();
@@ -585,15 +617,60 @@
             roomInfo.textContent = roomName;
             currentMapType.textContent = mapType;
             gameRunning = true;
+            
+            // Start the game loop
             requestAnimationFrame(gameLoop);
+            
+            // Start interval for updating player position (less frequent)
+            setInterval(updatePlayerPosition, 100);
+            
+            // Start interval for fetching other players (less frequent)
+            setInterval(updatePlayersList, 1000);
         }
 
-        async function gameLoop(timestamp) {
+        async function updatePlayerPosition() {
+            if (player.id && positionUpdatePending) {
+                try {
+                    await supabase
+                        .from("players")
+                        .update({ x: player.x, y: player.y })
+                        .eq("id", player.id);
+                    positionUpdatePending = false;
+                } catch (error) {
+                    console.error("Error updating player position:", error);
+                }
+            }
+        }
+
+        async function updatePlayersList() {
+            if (!currentRoom) return;
+            
+            try {
+                const { data: players, error } = await supabase
+                    .from("players")
+                    .select("*")
+                    .eq("room_id", currentRoom);
+                    
+                if (!error && players) {
+                    otherPlayers = players.filter(p => p.id !== player.id);
+                    playerCount.textContent = players.length;
+                    
+                    // Update players list
+                    playersContent.innerHTML = players
+                        .map(p => `<div class="player-item" style="color: ${p.color}">${p.name}${p.id === player.id ? ' (You)' : ''}</div>`)
+                        .join('');
+                }
+            } catch (error) {
+                console.error("Error fetching players:", error);
+            }
+        }
+
+        function gameLoop(timestamp) {
             if (!gameRunning) return;
             
             // Handle input
             let dx = 0, dy = 0;
-            const speed = 8; // Increased speed for better movement
+            const speed = 10; // Increased speed for better movement
             
             if (keys["w"] || keys["arrowup"]) dy -= speed;
             if (keys["s"] || keys["arrowdown"]) dy += speed;
@@ -610,15 +687,7 @@
             if (dx !== 0 || dy !== 0) {
                 player.x = Math.max(16, Math.min(mapWidth - 16, player.x + dx));
                 player.y = Math.max(16, Math.min(mapHeight - 16, player.y + dy));
-                
-                // Update player position in database (throttled to improve performance)
-                if (player.id && timestamp - lastPositionUpdate > 100) { // Update every 100ms
-                    lastPositionUpdate = timestamp;
-                    await supabase
-                        .from("players")
-                        .update({ x: player.x, y: player.y })
-                        .eq("id", player.id);
-                }
+                positionUpdatePending = true;
             }
             
             // Update camera to follow player
@@ -628,29 +697,6 @@
             // Keep camera within map bounds
             camera.x = Math.max(0, Math.min(mapWidth - canvas.width, camera.x));
             camera.y = Math.max(0, Math.min(mapHeight - canvas.height, camera.y));
-            
-            // Get other players (throttled to improve performance)
-            if (timestamp - lastPlayerFetch > 500) { // Update every 500ms
-                lastPlayerFetch = timestamp;
-                try {
-                    const { data: players, error } = await supabase
-                        .from("players")
-                        .select("*")
-                        .eq("room_id", currentRoom);
-                        
-                    if (!error && players) {
-                        otherPlayers = players.filter(p => p.id !== player.id);
-                        playerCount.textContent = players.length;
-                        
-                        // Update players list
-                        playersContent.innerHTML = players
-                            .map(p => `<div class="player-item" style="color: ${p.color}">${p.name}${p.id === player.id ? ' (You)' : ''}</div>`)
-                            .join('');
-                    }
-                } catch (error) {
-                    console.error("Error fetching players:", error);
-                }
-            }
             
             // Render game
             render();
