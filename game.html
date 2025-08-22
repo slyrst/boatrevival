@@ -1,56 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Cherry Blossom World 🌸</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <style>
-    :root {
-      --bg1: #ffe4ec; /* light pink */
-      --bg2: #ffd6f0; /* cherry blossom soft */
-      --accent1: #ff7aa2; 
-      --accent2: #ff5e78;
-      --text: #4a2c2a;
-    }
-    * { box-sizing: border-box }
-    body {
-      margin:0; 
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, var(--bg1), var(--bg2));
-      color: var(--text);
-      overflow:hidden;
-    }
-    .center{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:18px}
-    .card{
-      width:min(1000px,96vw);
-      background:rgba(255,255,255,0.8);
-      padding:16px;
-      border-radius:12px;
-      box-shadow:0 8px 20px rgba(0,0,0,.15);
-    }
-    h1{margin:0 0 8px;font-size:34px;color:var(--accent2)}
-    .row{display:flex;gap:12px;flex-wrap:wrap}
-    input,button{font-size:15px;padding:10px;border-radius:10px;border:0;outline:none}
-    .btn{background:linear-gradient(45deg,var(--accent1),var(--accent2));color:white;cursor:pointer;font-weight:800}
-    .btn-ghost{background:rgba(255,255,255,0.7);border:1px solid rgba(0,0,0,.1);cursor:pointer}
-    .rooms{margin-top:12px;display:flex;flex-direction:column;gap:8px;max-height:220px;overflow:auto}
-    .room{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:10px;background:rgba(255,255,255,0.5)}
-    .game{display:none;position:fixed;inset:0}
-    #gameCanvas{display:block;width:100%;height:100%;background:#87CEEB}
-    .ui{position:absolute;left:14px;top:14px;z-index:5;text-shadow:1px 1px 3px rgba(255,255,255,.7)}
-    .controls{position:absolute;left:14px;bottom:14px;z-index:5;text-shadow:1px 1px 3px rgba(255,255,255,.7)}
-    .top-right{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:5}
-    .pill{background:rgba(255,255,255,0.6);padding:6px 10px;border-radius:999px}
-    #statusBar{margin-top:8px;font-size:13px;color:#555}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cherry Blossom Boat 🌸</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root {
+    --bg1: #ffe4ec;
+    --bg2: #ffd6f0;
+    --accent1: #ff7aa2;
+    --accent2: #ff5e78;
+    --text: #4a2c2a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:linear-gradient(135deg,var(--bg1),var(--bg2));font-family:'Segoe UI',sans-serif;overflow:hidden;color:var(--text);}
+  .center{position:fixed;inset:0;display:flex;justify-content:center;align-items:center;padding:18px;}
+  .card{background:rgba(255,255,255,0.85);padding:16px;border-radius:12px;width:min(1000px,95vw);box-shadow:0 8px 20px rgba(0,0,0,0.15);}
+  h1{margin-bottom:8px;color:var(--accent2);}
+  .row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  input,button{padding:10px;border-radius:10px;border:none;outline:none;font-size:15px;}
+  .btn{background:linear-gradient(45deg,var(--accent1),var(--accent2));color:white;cursor:pointer;font-weight:800;}
+  .btn-ghost{background:rgba(255,255,255,0.7);border:1px solid rgba(0,0,0,0.1);cursor:pointer;}
+  .rooms{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow:auto;}
+  .room{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:10px;background:rgba(255,255,255,0.5);}
+  .game{display:none;position:fixed;inset:0;}
+  #gameCanvas{display:block;width:100%;height:100%;background:#87CEEB;}
+  .ui{position:absolute;left:14px;top:14px;z-index:5;text-shadow:1px 1px 3px rgba(255,255,255,0.7);}
+  .controls{position:absolute;left:14px;bottom:14px;z-index:5;text-shadow:1px 1px 3px rgba(255,255,255,0.7);}
+  .top-right{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:5;}
+</style>
 </head>
 <body>
 <div id="menu" class="center">
   <div class="card">
-    <h1>🌸 Cherry Blossom World</h1>
+    <h1>🌸 Cherry Blossom Boat</h1>
     <div class="row">
-      <input id="playerName" placeholder="Your Name"/>
+      <input id="playerName" placeholder="Your Name">
       <button class="btn" id="createBtn">Create Room</button>
     </div>
     <div id="statusBar">Connecting...</div>
@@ -61,20 +47,16 @@
 <div id="game" class="game">
   <canvas id="gameCanvas"></canvas>
   <div class="ui"><h2 id="roomInfo"></h2></div>
-  <div class="controls"><p>WASD / Arrow Keys to move 🌸</p></div>
+  <div class="controls">WASD / Arrow Keys to move 🌸</div>
   <div class="top-right"><button id="leaveBtn" class="btn-ghost">Leave</button></div>
 </div>
 
 <script>
-  // ---------- Supabase Config ----------
+  // ---------- Supabase setup ----------
   const SUPABASE_URL = "https://chumxrvwpxmxttbbvemp.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNodW14cnZ3cHhteHR0YmJ2ZW1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4OTIxMjcsImV4cCI6MjA3MTQ2ODEyN30.__GvVFs6SwJVKLUuz6Y7aA8R5wxDWlBeA8qhKpQrCbc";
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  let currentRoom = null;
-  let player = {id:null, name:"", x:100, y:100};
-
-  // ---------- UI ----------
   const menu = document.getElementById("menu");
   const gameDiv = document.getElementById("game");
   const canvas = document.getElementById("gameCanvas");
@@ -86,35 +68,41 @@
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  // ---------- Create Room ----------
-  document.getElementById("createBtn").onclick = async () => {
-    const name = document.getElementById("playerName").value.trim() || "Anon";
-    player.name = name;
+  let currentRoom = null;
+  let player = {id:null,name:"",x:100,y:100};
+  let worldMap=[]; 
+  let keys={};
 
-    const map = generateMap(20,20);
-    const { data, error } = await supabase.from("rooms").insert([{map}]).select().single();
-    if(error){statusBar.textContent="Error: "+error.message;return;}
+  // ---------- Input ----------
+  window.onkeydown=e=>keys[e.key.toLowerCase()]=true;
+  window.onkeyup=e=>keys[e.key.toLowerCase()]=false;
+
+  // ---------- Create Room ----------
+  document.getElementById("createBtn").onclick=async()=>{
+    const name=document.getElementById("playerName").value.trim()||"Anon";
+    player.name=name;
+    const map=generateMap(20,20);
+    const {data,error}=await supabase.from("rooms").insert([{map}]).select().single();
+    if(error){statusBar.textContent="Error:"+error.message;return;}
     joinRoom(data.id);
   };
 
   // ---------- Join Room ----------
   async function joinRoom(roomId){
-    currentRoom = roomId;
-    const {data,error} = await supabase.from("players").insert([{room_id:roomId,name:player.name,x:100,y:100}]).select().single();
-    if(error){statusBar.textContent="Join error: "+error.message;return;}
-    player.id = data.id;
+    currentRoom=roomId;
+    const {data,error}=await supabase.from("players").insert([{room_id:roomId,name:player.name,x:100,y:100}]).select().single();
+    if(error){statusBar.textContent="Join error:"+error.message;return;}
+    player.id=data.id;
     startGame();
   }
 
-  // ---------- Leave ----------
-  document.getElementById("leaveBtn").onclick = async ()=>{
-    await supabase.from("players").delete().eq("id",player.id);
+  document.getElementById("leaveBtn").onclick=async()=>{
+    if(player.id) await supabase.from("players").delete().eq("id",player.id);
     location.reload();
   }
 
-  // ---------- Poll Rooms ----------
   async function loadRooms(){
-    const {data,error} = await supabase.from("rooms").select("*").limit(5);
+    const {data,error}=await supabase.from("rooms").select("*").limit(5);
     roomsList.innerHTML="";
     if(data){
       data.forEach(r=>{
@@ -130,7 +118,6 @@
   loadRooms();
 
   // ---------- Map ----------
-  let worldMap=[];
   function generateMap(w,h){
     let m=[];
     for(let y=0;y<h;y++){
@@ -148,26 +135,18 @@
   }
 
   // ---------- Game Loop ----------
-  let keys={};
-  window.onkeydown=e=>keys[e.key]=true;
-  window.onkeyup=e=>keys[e.key]=false;
-
   async function gameLoop(){
-    // Movement
-    if(keys["ArrowUp"]||keys["w"]) player.y-=2;
-    if(keys["ArrowDown"]||keys["s"]) player.y+=2;
-    if(keys["ArrowLeft"]||keys["a"]) player.x-=2;
-    if(keys["ArrowRight"]||keys["d"]) player.x+=2;
+    if(keys["w"]||keys["arrowup"]) player.y-=2;
+    if(keys["s"]||keys["arrowdown"]) player.y+=2;
+    if(keys["a"]||keys["arrowleft"]) player.x-=2;
+    if(keys["d"]||keys["arrowright"]) player.x+=2;
 
-    // Update player
     if(player.id){
       await supabase.from("players").update({x:player.x,y:player.y}).eq("id",player.id);
     }
 
-    // Fetch players
     const {data:players}=await supabase.from("players").select("*").eq("room_id",currentRoom);
 
-    // Draw
     ctx.clearRect(0,0,canvas.width,canvas.height);
     drawMap();
     if(players){
@@ -198,13 +177,13 @@
     }
   }
 
-  // ---------- Start ----------
   async function startGame(){
     menu.style.display="none";
     gameDiv.style.display="block";
     roomInfo.textContent="Room "+currentRoom;
 
-    const {data}=await supabase.from("rooms").select("map").eq("id",currentRoom).single();
+    const {data,error}=await supabase.from("rooms").select("map").eq("id",currentRoom).single();
+    if(error){statusBar.textContent="Error loading map";return;}
     worldMap=data.map;
 
     requestAnimationFrame(gameLoop);
