@@ -6,54 +6,54 @@
   <title>Roblox 2D - Login & Play (Firebase + Live)</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); overflow: hidden; }
+    body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); overflow: hidden; }
     /* Auth */
-    .auth-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2000; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
-    .auth-container { background: #fff; padding: 32px; border-radius: 16px; width: min(420px,90vw); box-shadow: 0 20px 40px rgba(0,0,0,.3); }
-    .auth-container h2 { color: #333; margin-bottom: 20px; font-size: 1.8rem; text-align:center; }
+    .auth-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2000; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); }
+    .auth-container { background: #fff; padding: 32px; border-radius: 16px; width: min(420px,90vw); box-shadow: 0 20px 40px rgba(255,105,180,.3); }
+    .auth-container h2 { color: #d63384; margin-bottom: 20px; font-size: 1.8rem; text-align:center; }
     .form-group { margin-bottom: 14px; }
-    .form-group label { display:block; margin-bottom:6px; color:#444; font-weight:600; }
-    .form-group input, .form-group select { width:100%; padding:12px; border:2px solid #ddd; border-radius:8px; font-size:16px; }
-    .form-group input:focus, .form-group select:focus { outline:none; border-color:#667eea; }
-    .auth-button { width:100%; background: linear-gradient(45deg,#667eea,#764ba2); border:none; padding:12px; color:#fff; font-weight:700; border-radius:10px; cursor:pointer; margin:8px 0; }
-    .google-btn { background:#db4437; }
-    .auth-toggle { color:#667eea; text-decoration:underline; cursor:pointer; margin-top:8px; display:block; text-align:center; }
-    .error-message { color:#f44336; font-size:14px; min-height:18px; margin-top:6px; }
+    .form-group label { display:block; margin-bottom:6px; color:#d63384; font-weight:600; }
+    .form-group input, .form-group select { width:100%; padding:12px; border:2px solid #f8d7da; border-radius:8px; font-size:16px; }
+    .form-group input:focus, .form-group select:focus { outline:none; border-color:#ff69b4; }
+    .auth-button { width:100%; background: linear-gradient(45deg, #ff69b4, #ff1493); border:none; padding:12px; color:#fff; font-weight:700; border-radius:10px; cursor:pointer; margin:8px 0; }
+    .google-btn { background: linear-gradient(45deg, #ff69b4, #db4437); }
+    .auth-toggle { color:#ff69b4; text-decoration:underline; cursor:pointer; margin-top:8px; display:block; text-align:center; }
+    .error-message { color:#dc3545; font-size:14px; min-height:18px; margin-top:6px; }
 
     /* Menu */
-    .main-menu { display:none; position: fixed; inset: 0; z-index: 1500; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
-    .menu-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; background: rgba(255,255,255,.08); backdrop-filter: blur(10px); border-bottom:1px solid rgba(255,255,255,.2); }
-    .menu-title { color:#fff; font-size:1.6rem; font-weight:800; }
+    .main-menu { display:none; position: fixed; inset: 0; z-index: 1500; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); }
+    .menu-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; background: rgba(255,255,255,.15); backdrop-filter: blur(10px); border-bottom:1px solid rgba(255,182,193,.3); }
+    .menu-title { color:#fff; font-size:1.6rem; font-weight:800; text-shadow: 2px 2px 4px rgba(0,0,0,.2); }
     .user-info { display:flex; align-items:center; gap:12px; color:#fff; }
     .user-avatar { width:42px; height:42px; border-radius:50%; border:2px solid #fff; object-fit:cover; }
-    .logout-btn { background: rgba(255,255,255,.2); border:1px solid #fff; color:#fff; padding:6px 12px; border-radius:8px; cursor:pointer; }
+    .logout-btn { background: rgba(255,255,255,.3); border:1px solid #fff; color:#fff; padding:6px 12px; border-radius:8px; cursor:pointer; }
     .menu-content { display:flex; height: calc(100vh - 66px); }
-    .menu-sidebar { width:280px; padding:16px; background: rgba(255,255,255,.08); backdrop-filter: blur(10px); border-right:1px solid rgba(255,255,255,.2); }
+    .menu-sidebar { width:280px; padding:16px; background: rgba(255,255,255,.12); backdrop-filter: blur(10px); border-right:1px solid rgba(255,182,193,.3); }
     .menu-main { flex:1; padding:16px; overflow:auto; }
-    .sidebar-btn { width:100%; background: rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.3); color:#fff; padding:12px; margin:8px 0; border-radius:10px; cursor:pointer; font-size:15px; transition:.2s; }
-    .sidebar-btn.active, .sidebar-btn:hover { background: rgba(255,255,255,.22); transform: translateX(4px); }
+    .sidebar-btn { width:100%; background: rgba(255,255,255,.15); border:1px solid rgba(255,182,193,.4); color:#fff; padding:12px; margin:8px 0; border-radius:10px; cursor:pointer; font-size:15px; transition:.2s; }
+    .sidebar-btn.active, .sidebar-btn:hover { background: rgba(255,255,255,.25); transform: translateX(4px); }
     .section { display:none; }
     .section.active { display:block; }
-    .section h3 { color:#fff; font-size:1.5rem; margin-bottom:10px; }
+    .section h3 { color:#fff; font-size:1.5rem; margin-bottom:10px; text-shadow: 1px 1px 2px rgba(0,0,0,.2); }
     .worlds-grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap:14px; margin-top:10px; }
-    .world-card { background: rgba(255,255,255,.1); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.2); border-radius:14px; padding:14px; }
-    .world-thumbnail { width:100%; height:110px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:22px; background: linear-gradient(45deg,#4CAF50,#2196F3); margin-bottom:8px; }
+    .world-card { background: rgba(255,255,255,.15); backdrop-filter: blur(10px); border:1px solid rgba(255,182,193,.3); border-radius:14px; padding:14px; }
+    .world-thumbnail { width:100%; height:110px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:22px; background: linear-gradient(45deg, #ff69b4, #ff1493); margin-bottom:8px; }
     .world-info { color:#fff; }
     .world-name { font-weight:800; }
     .world-players { font-size:13px; opacity:.9; }
-    .play-world-btn { width:100%; background: linear-gradient(45deg,#ff6b6b,#ee5a24); border:none; padding:10px; color:#fff; font-weight:800; border-radius:8px; cursor:pointer; margin-top:8px; }
-    .create-world-btn { background: linear-gradient(45deg,#4CAF50,#45a049); border:none; padding:12px 18px; color:#fff; border-radius:10px; cursor:pointer; font-weight:800; margin:6px 0 14px; }
+    .play-world-btn { width:100%; background: linear-gradient(45deg, #ff69b4, #ff1493); border:none; padding:10px; color:#fff; font-weight:800; border-radius:8px; cursor:pointer; margin-top:8px; }
+    .create-world-btn { background: linear-gradient(45deg, #ff69b4, #ff1493); border:none; padding:12px 18px; color:#fff; border-radius:10px; cursor:pointer; font-weight:800; margin:6px 0 14px; }
 
     /* Game */
     .game-container { display:none; position: fixed; inset: 0; }
-    #gameCanvas { display:block; background:#87CEEB; width:100vw; height:100vh; }
-    .back-btn { position:absolute; top:16px; right:16px; background: rgba(0,0,0,.7); color:#fff; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; z-index:100; }
+    #gameCanvas { display:block; background:#ffc0cb; width:100vw; height:100vh; }
+    .back-btn { position:absolute; top:16px; right:16px; background: rgba(255,105,180,.8); color:#fff; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; z-index:100; }
     .ui-overlay { position:absolute; top:16px; left:16px; color:#fff; font-weight:700; text-shadow: 2px 2px 4px rgba(0,0,0,.6); z-index:100; }
     .controls { position:absolute; bottom:16px; left:16px; color:#fff; font-size:14px; text-shadow: 2px 2px 4px rgba(0,0,0,.6); z-index:100; }
 
     .modal { position:fixed; inset:0; background: rgba(0,0,0,.8); display:none; align-items:center; justify-content:center; z-index:3000; }
     .modal-content { background:#fff; padding:20px; border-radius:12px; width:min(520px,92vw); }
-    .modal-content h3 { margin-bottom:10px; color:#333; }
+    .modal-content h3 { margin-bottom:10px; color:#d63384; }
 
     @media (max-width: 768px) {
       .menu-content { flex-direction: column; }
@@ -170,8 +170,16 @@
     import { getFirestore, collection, addDoc, doc, setDoc, updateDoc, getDocs, onSnapshot, query, where, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
     import { getDatabase, ref, onValue, set, update, onDisconnect, remove, serverTimestamp as rtdbServerTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
-    // ❗ Replace with your Firebase project config
-   const firebaseConfig = { apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA", authDomain: "boat-revival.firebaseapp.com", projectId: "boat-revival", storageBucket: "boat-revival.appspot.com", messagingSenderId: "207519236382", appId: "1:207519236382:web:3a61a1b8811fd811e0c90f" };
+    // Firebase Config
+    const firebaseConfig = { 
+      apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA", 
+      authDomain: "boat-revival.firebaseapp.com", 
+      projectId: "boat-revival", 
+      storageBucket: "boat-revival.appspot.com", 
+      messagingSenderId: "207519236382", 
+      appId: "1:207519236382:web:3a61a1b8811fd811e0c90f" 
+    };
+    
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
@@ -295,127 +303,186 @@
       if (!name) return err.textContent = 'Please enter a world name';
       try {
         const id = await createWorldDoc({ name, type, isPublic, owner: auth.currentUser });
-        // update UI automatically via onSnapshot
         window.closeCreateWorldModal();
       } catch(e) { err.textContent = e.message; }
     };
 
-    /***** 4) Presence + Live Positions (Realtime DB) *****/
+    /***** 4) Game Engine - Fixed *****/
     const MAP_W = 2000, MAP_H = 1500, TILE = 64;
 
+    // Fixed pink-themed map types
     const mapTypes = {
-      'Grasslands': { primary: '#4a7c59', secondary: '#8b8680' },
-      'Desert Oasis': { primary: '#f4e4bc', secondary: '#4a90e2' },
-      'Volcanic Island': { primary: '#8b8680', secondary: '#ff4757' },
-      'Winter Wonderland': { primary: '#ffffff', secondary: '#4a90e2' },
-      'Forest Grove': { primary: '#4a7c59', secondary: '#deb887' },
-      'Rocky Canyon': { primary: '#8b8680', secondary: '#8b4513' }
+      'Grasslands': { primary: '#ffb3d9', secondary: '#ff99cc' },
+      'Desert Oasis': { primary: '#ffc0cb', secondary: '#ff69b4' },
+      'Volcanic Island': { primary: '#ff1493', secondary: '#dc143c' },
+      'Winter Wonderland': { primary: '#ffe4e6', secondary: '#ffb3d9' },
+      'Forest Grove': { primary: '#ff69b4', secondary: '#dda0dd' },
+      'Rocky Canyon': { primary: '#d87093', secondary: '#db7093' }
     };
 
     let canvas = $('gameCanvas');
     let ctx = canvas.getContext('2d');
     let keys = {};
-    let camera = { x:0, y:0 };
-    let player = { x: 400, y: 300, width: 32, height: 32, speed: 5, color: '#ff6b6b' };
+    let camera = { x: 0, y: 0 };
+    let player = { x: 400, y: 300, width: 32, height: 32, speed: 5, color: '#ff1493' };
     let currentWorld = null;
     let tiles = [];
     let roomRef = null, myPlayerRef = null, unsubPresence = null;
     let otherPlayers = {};
+    let gameRunning = false;
 
-    window.addEventListener('keydown', (e)=>{ keys[e.code]=true; });
-    window.addEventListener('keyup', (e)=>{ keys[e.code]=false; });
+    // Event listeners
+    window.addEventListener('keydown', (e) => { keys[e.code] = true; });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
     window.addEventListener('resize', resizeCanvas);
 
-    function resizeCanvas(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+    function resizeCanvas() { 
+      canvas.width = innerWidth; 
+      canvas.height = innerHeight; 
+    }
     resizeCanvas();
 
-    function generateMap(type){
+    // Fixed map generation
+    function generateMap(type) {
+      console.log('Generating map for type:', type);
       const cfg = mapTypes[type] || mapTypes['Grasslands'];
       tiles = [];
-      const cols = Math.ceil(MAP_W / TILE), rows = Math.ceil(MAP_H / TILE);
-      for (let y=0;y<rows;y++){
-        tiles[y]=[];
-        for (let x=0;x<cols;x++){
-          const n = Math.sin(x*.1)*Math.cos(y*.1) + Math.sin(x*.05)*Math.cos(y*.05)*.5;
-          tiles[y][x] = n>0.2? cfg.secondary: cfg.primary;
+      const cols = Math.ceil(MAP_W / TILE);
+      const rows = Math.ceil(MAP_H / TILE);
+      
+      for (let y = 0; y < rows; y++) {
+        tiles[y] = [];
+        for (let x = 0; x < cols; x++) {
+          // Simple noise pattern for terrain variation
+          const n = Math.sin(x * 0.1) * Math.cos(y * 0.1) + Math.sin(x * 0.05) * Math.cos(y * 0.05) * 0.5;
+          tiles[y][x] = n > 0.2 ? cfg.secondary : cfg.primary;
         }
       }
+      console.log('Map generated with', rows, 'rows and', cols, 'cols');
     }
 
-    function handleInput(){
-      let dx=0, dy=0;
-      if (keys['ArrowLeft']||keys['KeyA']) dx -= player.speed;
-      if (keys['ArrowRight']||keys['KeyD']) dx += player.speed;
-      if (keys['ArrowUp']||keys['KeyW']) dy -= player.speed;
-      if (keys['ArrowDown']||keys['KeyS']) dy += player.speed;
-      if (dx && dy){ dx*=0.707; dy*=0.707; }
-      player.x = Math.max(16, Math.min(MAP_W-16, player.x+dx));
-      player.y = Math.max(16, Math.min(MAP_H-16, player.y+dy));
-      camera.x = Math.max(0, Math.min(MAP_W - canvas.width, player.x - canvas.width/2));
-      camera.y = Math.max(0, Math.min(MAP_H - canvas.height, player.y - canvas.height/2));
+    function handleInput() {
+      if (!gameRunning) return;
+      
+      let dx = 0, dy = 0;
+      if (keys['ArrowLeft'] || keys['KeyA']) dx -= player.speed;
+      if (keys['ArrowRight'] || keys['KeyD']) dx += player.speed;
+      if (keys['ArrowUp'] || keys['KeyW']) dy -= player.speed;
+      if (keys['ArrowDown'] || keys['KeyS']) dy += player.speed;
+      
+      // Diagonal movement normalization
+      if (dx && dy) { 
+        dx *= 0.707; 
+        dy *= 0.707; 
+      }
+      
+      // Update player position with bounds checking
+      player.x = Math.max(16, Math.min(MAP_W - 16, player.x + dx));
+      player.y = Math.max(16, Math.min(MAP_H - 16, player.y + dy));
+      
+      // Update camera to follow player
+      camera.x = Math.max(0, Math.min(MAP_W - canvas.width, player.x - canvas.width / 2));
+      camera.y = Math.max(0, Math.min(MAP_H - canvas.height, player.y - canvas.height / 2));
     }
 
-    function drawMap(){
-      const startX = Math.floor(camera.x / TILE), startY = Math.floor(camera.y / TILE);
-      const endX = Math.ceil((camera.x+canvas.width)/TILE), endY = Math.ceil((camera.y+canvas.height)/TILE);
-      for (let y=startY;y<endY;y++){
-        for (let x=startX;x<endX;x++){
-          if (!tiles[y]||!tiles[y][x]) continue;
+    function drawMap() {
+      if (!tiles.length) return;
+      
+      const startX = Math.floor(camera.x / TILE);
+      const startY = Math.floor(camera.y / TILE);
+      const endX = Math.ceil((camera.x + canvas.width) / TILE);
+      const endY = Math.ceil((camera.y + canvas.height) / TILE);
+      
+      for (let y = startY; y < endY; y++) {
+        for (let x = startX; x < endX; x++) {
+          if (!tiles[y] || !tiles[y][x]) continue;
+          
           ctx.fillStyle = tiles[y][x];
-          ctx.fillRect(x*TILE - camera.x, y*TILE - camera.y, TILE, TILE);
+          ctx.fillRect(
+            x * TILE - camera.x, 
+            y * TILE - camera.y, 
+            TILE, 
+            TILE
+          );
         }
       }
     }
 
-    function drawPlayers(){
-      // draw other players
-      for (const uid in otherPlayers){
+    function drawPlayers() {
+      // Draw other players
+      for (const uid in otherPlayers) {
         const p = otherPlayers[uid];
         if (!p || !p.pos) continue;
-        ctx.fillStyle = p.color || '#222';
+        
+        ctx.fillStyle = p.color || '#ff69b4';
         ctx.beginPath();
-        ctx.arc(p.pos.x - camera.x, p.pos.y - camera.y, 16, 0, Math.PI*2);
+        ctx.arc(p.pos.x - camera.x, p.pos.y - camera.y, 16, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Player name
         ctx.fillStyle = '#fff';
         ctx.font = '12px Arial';
-        ctx.fillText(p.name||'Player', p.pos.x - camera.x - 24, p.pos.y - camera.y - 20);
+        ctx.textAlign = 'center';
+        ctx.fillText(p.name || 'Player', p.pos.x - camera.x, p.pos.y - camera.y - 20);
       }
-      // draw me
+      
+      // Draw current player
       ctx.fillStyle = player.color;
-      ctx.fillRect(player.x - 16 - camera.x, player.y - 16 - camera.y, 32, 32);
+      ctx.fillRect(
+        player.x - 16 - camera.x, 
+        player.y - 16 - camera.y, 
+        32, 
+        32
+      );
     }
 
     let lastSend = 0;
-    function maybeSendPosition(){
+    function maybeSendPosition() {
       const now = performance.now();
       if (now - lastSend < 50) return; // ~20 Hz
       lastSend = now;
-      if (myPlayerRef){
-        update(myPlayerRef, { pos: { x: Math.round(player.x), y: Math.round(player.y) }, ts: rtdbServerTimestamp() });
+      
+      if (myPlayerRef) {
+        update(myPlayerRef, { 
+          pos: { x: Math.round(player.x), y: Math.round(player.y) }, 
+          ts: rtdbServerTimestamp() 
+        });
       }
     }
 
-    function gameLoop(){
-      if (!currentWorld) return;
+    function gameLoop() {
+      if (!gameRunning || !currentWorld) return;
+      
       handleInput();
-      ctx.clearRect(0,0,canvas.width,canvas.height);
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw game world
       drawMap();
       drawPlayers();
+      
+      // Send player position
       maybeSendPosition();
+      
       requestAnimationFrame(gameLoop);
     }
 
-    async function updateWorldPlayerCount(worldId){
-      // Count from RTDB players length and mirror to Firestore.
+    async function updateWorldPlayerCount(worldId) {
       const playersRef = ref(rtdb, `rooms/${worldId}/players`);
       onValue(playersRef, async (snap) => {
-        const val = snap.val()||{}; const count = Object.keys(val).length;
+        const val = snap.val() || {};
+        const count = Object.keys(val).length;
         $('playerCount').textContent = count;
-        try { await updateDoc(doc(db,'worlds',worldId), { players: count }); } catch{}
+        try { 
+          await updateDoc(doc(db, 'worlds', worldId), { players: count }); 
+        } catch(e) {
+          console.error('Error updating player count:', e);
+        }
       });
     }
 
-    async function joinRoom(world){
+    async function joinRoom(world) {
       const uid = auth.currentUser.uid;
       roomRef = ref(rtdb, `rooms/${world.id}`);
       myPlayerRef = ref(rtdb, `rooms/${world.id}/players/${uid}`);
@@ -428,76 +495,69 @@
         pos: { x: player.x, y: player.y },
         joinedAt: rtdbServerTimestamp()
       };
+      
       await set(myPlayerRef, me);
       onDisconnect(myPlayerRef).remove();
 
-      // Listen others
+      // Listen to other players
       const playersRef = ref(rtdb, `rooms/${world.id}/players`);
       if (unsubPresence) unsubPresence();
-      unsubPresence = onValue(playersRef, (snap)=>{
-        const val = snap.val()||{}; delete val[uid]; otherPlayers = val; // others only
+      unsubPresence = onValue(playersRef, (snap) => {
+        const val = snap.val() || {};
+        delete val[uid]; // Remove self
+        otherPlayers = val;
       });
 
       updateWorldPlayerCount(world.id);
     }
 
     window.playWorld = async (world) => {
+      console.log('Starting world:', world);
       currentWorld = world;
       $('currentWorldName').textContent = world.name;
+      
+      // Hide menu, show game
       mainMenu.style.display = 'none';
       gameContainer.style.display = 'block';
+      
+      // Reset player position
+      player.x = 400;
+      player.y = 300;
+      camera.x = 0;
+      camera.y = 0;
+      
+      // Generate world map
       generateMap(world.type);
       resizeCanvas();
+      
+      // Join multiplayer room
       await joinRoom(world);
+      
+      // Start game loop
+      gameRunning = true;
       requestAnimationFrame(gameLoop);
     };
 
     window.backToMenu = async () => {
-      if (myPlayerRef) { try { await remove(myPlayerRef); } catch{} }
-      currentWorld = null; otherPlayers = {}; roomRef = null; myPlayerRef = null;
+      gameRunning = false;
+      
+      if (myPlayerRef) { 
+        try { 
+          await remove(myPlayerRef); 
+        } catch(e) {
+          console.error('Error removing player:', e);
+        }
+      }
+      
+      currentWorld = null;
+      otherPlayers = {};
+      roomRef = null;
+      myPlayerRef = null;
+      
       gameContainer.style.display = 'none';
       mainMenu.style.display = 'block';
     };
 
-    /***** 5) Auth state -> wire UI + data *****/
+    /***** 5) Auth state handler *****/
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // UI
-        $('userName').textContent = user.displayName || 'Player';
-        $('userEmail').textContent = user.email || '';
-        $('userAvatar').src = user.photoURL || 'https://via.placeholder.com/80';
-        authScreen.style.display = 'none';
-        mainMenu.style.display = 'block';
-
-        // Live worlds lists
-        if (window._unsubMyWorlds) window._unsubMyWorlds();
-        if (window._unsubPublicWorlds) window._unsubPublicWorlds();
-        window._unsubMyWorlds = await loadMyWorlds(user.uid, (arr)=>renderWorlds('myWorldsGrid', arr));
-        window._unsubPublicWorlds = await loadPublicWorlds((arr)=>renderWorlds('publicWorldsGrid', arr, true));
-      } else {
-        if (window._unsubMyWorlds) window._unsubMyWorlds();
-        if (window._unsubPublicWorlds) window._unsubPublicWorlds();
-        mainMenu.style.display = 'none';
-        gameContainer.style.display = 'none';
-        authScreen.style.display = 'flex';
-      }
-    });
-
-    /***** 6) (Optional) Basic security rules (paste in Firebase console) *****
-    // Firestore rules example:
-    // rules_version = '2';
-    // service cloud.firestore { match /databases/{database}/documents { match /worlds/{worldId} {
-    //   allow read: if true; // or request.auth != null for authed only
-    //   allow create: if request.auth != null && request.resource.data.owner == request.auth.uid;
-    //   allow update, delete: if request.auth != null && resource.data.owner == request.auth.uid;
-    // } } }
-
-    // Realtime Database rules example:
-    // { "rules": { "rooms": { "$world": { "players": { "$uid": {
-    //   ".read": true,
-    //   ".write": "auth != null && auth.uid == $uid"
-    // } } } } } }
-    *****/
-  </script>
-</body>
-</html>
