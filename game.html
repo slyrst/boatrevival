@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Roblox 2D - Login & Play (Fixed Firebase)</title>
+  <title>Roblox 2D - Fixed Version</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); overflow: hidden; }
@@ -29,13 +29,13 @@
     .user-avatar { width:42px; height:42px; border-radius:50%; border:2px solid #fff; object-fit:cover; }
     .logout-btn { background: rgba(255,255,255,.3); border:1px solid #fff; color:#fff; padding:6px 12px; border-radius:8px; cursor:pointer; }
     .menu-content { display:flex; height: calc(100vh - 66px); }
-    .menu-sidebar { width:280px; padding:16px; background: rgba(255,255,255,.12); backdrop-filter: blur: blur(10px); border-right:1px solid rgba(255,182,193,.3); }
+    .menu-sidebar { width:280px; padding:16px; background: rgba(255,255,255,.12); backdrop-filter: blur(10px); border-right:1px solid rgba(255,182,193,.3); }
     .menu-main { flex:1; padding:16px; overflow:auto; }
     .sidebar-btn { width:100%; background: rgba(255,255,255,.15); border:1px solid rgba(255,182,193,.4); color:#fff; padding:12px; margin:8px 0; border-radius:10px; cursor:pointer; font-size:15px; transition:.2s; }
     .sidebar-btn.active, .sidebar-btn:hover { background: rgba(255,255,255,.25); transform: translateX(4px); }
     .section { display:none; }
     .section.active { display:block; }
-    .section h3 { color:#fff; font-size:1.5rem; margin-bottom:10px; text-shadow: 1px 1px 2px rgba:0,0,0,.2); }
+    .section h3 { color:#fff; font-size:1.5rem; margin-bottom:10px; text-shadow: 1px 1px 2px rgba(0,0,0,.2); }
     .worlds-grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap:14px; margin-top:10px; }
     .world-card { background: rgba(255,255,255,.15); backdrop-filter: blur(10px); border:1px solid rgba(255,182,193,.3); border-radius:14px; padding:14px; }
     .world-thumbnail { width:100%; height:110px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:22px; background: linear-gradient(45deg, #ff69b4, #ff1493); margin-bottom:8px; }
@@ -164,14 +164,14 @@
     <div class="controls">Use WASD / Arrow Keys to move</div>
   </div>
 
-  <script type="module">
-    /***** 🔧 1) Firebase Setup *****/
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-    import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-    import { getFirestore, collection, addDoc, doc, setDoc, updateDoc, getDocs, onSnapshot, query, where, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-    import { getDatabase, ref, onValue, set, update, onDisconnect, remove, serverTimestamp as rtdbServerTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-    // Firebase Config - FIXED: Using a more generic config that should work
+  <script>
+    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
       authDomain: "boat-revival.firebaseapp.com",
@@ -179,86 +179,95 @@
       storageBucket: "boat-revival.appspot.com",
       messagingSenderId: "207519236382",
       appId: "1:207519236382:web:3a61a1b8811fd811e0c90f",
-      databaseURL: "https://boat-revival-default-rtdb.firebaseio.com" // Added database URL
+      databaseURL: "https://boat-revival-default-rtdb.firebaseio.com"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const rtdb = getDatabase(app);
-    const googleProvider = new GoogleAuthProvider();
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const rtdb = firebase.database();
+    const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-    /***** 2) UI Helpers *****/
-    const $ = (id) => document.getElementById(id);
-    const authScreen = $('authScreen');
-    const mainMenu = $('mainMenu');
-    const gameContainer = $('gameContainer');
-
-    // Sections
-    window.showSection = (e, name) => {
-      document.querySelectorAll('.sidebar-btn').forEach(b=>b.classList.remove('active'));
+    // UI Elements
+    const authScreen = document.getElementById('authScreen');
+    const mainMenu = document.getElementById('mainMenu');
+    const gameContainer = document.getElementById('gameContainer');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    
+    // UI Helpers
+    function showSection(e, name) {
+      document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
       e.currentTarget.classList.add('active');
-      document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-      $(name).classList.add('active');
-    };
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById(name).classList.add('active');
+    }
 
     // Auth toggles
-    $('toRegister').onclick = () => { $('loginForm').style.display='none'; $('registerForm').style.display='block'; $('loginError').textContent=''; };
-    $('toLogin').onclick = () => { $('registerForm').style.display='none'; $('loginForm').style.display='block'; $('registerError').textContent=''; };
+    document.getElementById('toRegister').onclick = () => { 
+      loginForm.style.display = 'none'; 
+      registerForm.style.display = 'block'; 
+      document.getElementById('loginError').textContent = ''; 
+    };
+    
+    document.getElementById('toLogin').onclick = () => { 
+      registerForm.style.display = 'none'; 
+      loginForm.style.display = 'block'; 
+      document.getElementById('registerError').textContent = ''; 
+    };
 
-    // Buttons
-    $('loginBtn').onclick = async () => {
-      const email = $('loginEmail').value.trim();
-      const pass = $('loginPassword').value;
-      const err = $('loginError');
+    // Auth buttons
+    document.getElementById('loginBtn').onclick = async () => {
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass = document.getElementById('loginPassword').value;
+      const err = document.getElementById('loginError');
+      
       if (!email || !pass) return err.textContent = 'Please fill in all fields';
+      
       try {
-        await signInWithEmailAndPassword(auth, email, pass);
+        await auth.signInWithEmailAndPassword(email, pass);
         err.textContent = '';
       } catch (e) { 
-        console.error("Login error:", e);
         err.textContent = e.message; 
       }
     };
 
-    $('registerBtn').onclick = async () => {
-      const username = $('registerUsername').value.trim();
-      const email = $('registerEmail').value.trim();
-      const pass = $('registerPassword').value;
-      const err = $('registerError');
+    document.getElementById('registerBtn').onclick = async () => {
+      const username = document.getElementById('registerUsername').value.trim();
+      const email = document.getElementById('registerEmail').value.trim();
+      const pass = document.getElementById('registerPassword').value;
+      const err = document.getElementById('registerError');
+      
       if (!username || !email || !pass) return err.textContent = 'Please fill in all fields';
-      if (pass.length < 6) return err.textContent = 'Password must be at least 6 characters';
+      
       try {
-        const cred = await createUserWithEmailAndPassword(auth, email, pass);
-        await updateProfile(cred.user, { displayName: username });
+        const cred = await auth.createUserWithEmailAndPassword(email, pass);
+        await cred.user.updateProfile({ displayName: username });
         err.textContent = '';
       } catch (e) { 
-        console.error("Registration error:", e);
         err.textContent = e.message; 
       }
     };
 
-    $('googleBtn').onclick = () => signInWithPopup(auth, googleProvider).catch(e => {
-      console.error("Google signin error:", e);
-      $('loginError').textContent = e.message;
-    });
-    
-    $('googleBtn2').onclick = () => signInWithPopup(auth, googleProvider).catch(e => {
-      console.error("Google signin error:", e);
-      $('registerError').textContent = e.message;
-    });
-    
-    $('logoutBtn').onclick = () => signOut(auth);
+    document.getElementById('googleBtn').onclick = () => 
+      auth.signInWithPopup(googleProvider).catch(e => 
+        document.getElementById('loginError').textContent = e.message);
+        
+    document.getElementById('googleBtn2').onclick = () => 
+      auth.signInWithPopup(googleProvider).catch(e => 
+        document.getElementById('registerError').textContent = e.message);
+        
+    document.getElementById('logoutBtn').onclick = () => auth.signOut();
 
-    /***** 3) Worlds (Cloud: Firestore) *****/
-    const worldsCol = collection(db, 'worlds');
+    // Worlds Management
+    const worldsCol = db.collection('worlds');
     let myWorldsUnsubscribe = null;
     let publicWorldsUnsubscribe = null;
 
     async function createWorldDoc({ name, type, isPublic, owner }) {
-      const worldId = crypto.randomUUID();
-      const docRef = doc(db, 'worlds', worldId);
-      await setDoc(docRef, {
+      const worldId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+      await worldsCol.doc(worldId).set({
         id: worldId,
         name,
         type,
@@ -266,7 +275,7 @@
         owner: owner.uid,
         ownerName: owner.displayName || 'Anonymous',
         ownerPhoto: owner.photoURL || '',
-        createdAt: serverTimestamp(),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         players: 0
       });
       return worldId;
@@ -275,31 +284,40 @@
     function loadMyWorlds(uid, cb) {
       if (myWorldsUnsubscribe) myWorldsUnsubscribe();
       
-      const q = query(worldsCol, where('owner','==',uid), orderBy('createdAt','desc'));
-      return onSnapshot(q, (snap) => {
-        const arr = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-        cb(arr);
-      }, (error) => {
-        console.error("Error loading my worlds:", error);
-      });
+      return worldsCol
+        .where('owner', '==', uid)
+        .orderBy('createdAt', 'desc')
+        .onSnapshot(snap => {
+          const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          cb(arr);
+        }, error => {
+          console.error("Error loading my worlds:", error);
+        });
     }
 
     function loadPublicWorlds(cb) {
       if (publicWorldsUnsubscribe) publicWorldsUnsubscribe();
       
-      const q = query(worldsCol, where('public','==',true), orderBy('createdAt','desc'));
-      return onSnapshot(q, (snap) => {
-        const arr = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-        cb(arr);
-      }, (error) => {
-        console.error("Error loading public worlds:", error);
-      });
+      return worldsCol
+        .where('public', '==', true)
+        .orderBy('createdAt', 'desc')
+        .onSnapshot(snap => {
+          const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          cb(arr);
+        }, error => {
+          console.error("Error loading public worlds:", error);
+        });
     }
 
-    function renderWorlds(gridId, list, showOwner=false) {
-      const grid = $(gridId);
+    function renderWorlds(gridId, list, showOwner = false) {
+      const grid = document.getElementById(gridId);
       grid.innerHTML = '';
-      if (!list.length) { grid.innerHTML = '<p style="color:#fff">No worlds yet.</p>'; return; }
+      
+      if (!list.length) { 
+        grid.innerHTML = '<p style="color:#fff">No worlds yet.</p>'; 
+        return; 
+      }
+      
       for (const w of list) {
         const el = document.createElement('div');
         el.className = 'world-card';
@@ -307,8 +325,8 @@
           <div class="world-thumbnail">🌍</div>
           <div class="world-info">
             <div class="world-name">${w.name}</div>
-            <div class="world-players">${w.type} • ${(w.players||0)}/50 players</div>
-            <div style="font-size:12px; opacity:.7; margin-top:4px;">${w.public? 'Public':'Private'}${showOwner? ` • by ${w.ownerName||'Unknown'}`:''}</div>
+            <div class="world-players">${w.type} • ${w.players || 0}/50 players</div>
+            <div style="font-size:12px; opacity:.7; margin-top:4px;">${w.public ? 'Public' : 'Private'}${showOwner ? ` • by ${w.ownerName || 'Unknown'}` : ''}</div>
           </div>
           <button class="play-world-btn" data-id="${w.id}">Play</button>
         `;
@@ -318,29 +336,33 @@
     }
 
     // Modal controls
-    window.showCreateWorldModal = () => $('createWorldModal').style.display='flex';
-    window.closeCreateWorldModal = () => { $('createWorldModal').style.display='none'; $('worldName').value=''; $('worldPublic').checked=false; $('createWorldError').textContent=''; };
+    window.showCreateWorldModal = () => document.getElementById('createWorldModal').style.display = 'flex';
+    window.closeCreateWorldModal = () => { 
+      document.getElementById('createWorldModal').style.display = 'none'; 
+      document.getElementById('worldName').value = ''; 
+      document.getElementById('worldPublic').checked = false; 
+      document.getElementById('createWorldError').textContent = ''; 
+    };
 
     window.createWorld = async () => {
-      const name = $('worldName').value.trim();
-      const type = $('worldType').value;
-      const isPublic = $('worldPublic').checked;
-      const err = $('createWorldError');
+      const name = document.getElementById('worldName').value.trim();
+      const type = document.getElementById('worldType').value;
+      const isPublic = document.getElementById('worldPublic').checked;
+      const err = document.getElementById('createWorldError');
+      
       if (!auth.currentUser) return err.textContent = 'Not logged in';
       if (!name) return err.textContent = 'Please enter a world name';
+      
       try {
         const id = await createWorldDoc({ name, type, isPublic, owner: auth.currentUser });
-        window.closeCreateWorldModal();
+        closeCreateWorldModal();
       } catch(e) { 
-        console.error("Error creating world:", e);
         err.textContent = e.message; 
       }
     };
 
-    /***** 4) Game Engine - Fixed *****/
+    // Game Engine
     const MAP_W = 2000, MAP_H = 1500, TILE = 64;
-
-    // Pink-themed map types
     const mapTypes = {
       'Grasslands': { primary: '#ffb3d9', secondary: '#ff99cc' },
       'Desert Oasis': { primary: '#ffc0cb', secondary: '#ff69b4' },
@@ -350,7 +372,7 @@
       'Rocky Canyon': { primary: '#d87093', secondary: '#db7093' }
     };
 
-    let canvas = $('gameCanvas');
+    let canvas = document.getElementById('gameCanvas');
     let ctx = canvas.getContext('2d');
     let keys = {};
     let camera = { x: 0, y: 0 };
@@ -367,8 +389,8 @@
     window.addEventListener('resize', resizeCanvas);
 
     function resizeCanvas() {
-      canvas.width = innerWidth;
-      canvas.height = innerHeight;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     }
     resizeCanvas();
 
@@ -473,10 +495,10 @@
       lastSend = now;
 
       if (myPlayerRef) {
-        update(myPlayerRef, {
+        myPlayerRef.update({
           pos: { x: Math.round(player.x), y: Math.round(player.y) },
-          ts: rtdbServerTimestamp()
-        }).catch(e => console.error("Error updating position:", e));
+          ts: firebase.database.ServerValue.TIMESTAMP
+        });
       }
     }
 
@@ -498,14 +520,14 @@
       requestAnimationFrame(gameLoop);
     }
 
-    async function updateWorldPlayerCount(worldId) {
-      const playersRef = ref(rtdb, `rooms/${worldId}/players`);
-      onValue(playersRef, async (snap) => {
+    function updateWorldPlayerCount(worldId) {
+      const playersRef = rtdb.ref(`rooms/${worldId}/players`);
+      playersRef.on('value', async (snap) => {
         const val = snap.val() || {};
         const count = Object.keys(val).length;
-        $('playerCount').textContent = count;
+        document.getElementById('playerCount').textContent = count;
         try {
-          await updateDoc(doc(db, 'worlds', worldId), { players: count });
+          await worldsCol.doc(worldId).update({ players: count });
         } catch(e) {
           console.error('Error updating player count:', e);
         }
@@ -514,8 +536,8 @@
 
     async function joinRoom(world) {
       const uid = auth.currentUser.uid;
-      roomRef = ref(rtdb, `rooms/${world.id}`);
-      myPlayerRef = ref(rtdb, `rooms/${world.id}/players/${uid}`);
+      roomRef = rtdb.ref(`rooms/${world.id}`);
+      myPlayerRef = rtdb.ref(`rooms/${world.id}/players/${uid}`);
 
       const me = {
         uid,
@@ -523,34 +545,29 @@
         photo: auth.currentUser.photoURL || '',
         color: player.color,
         pos: { x: player.x, y: player.y },
-        joinedAt: rtdbServerTimestamp()
+        joinedAt: firebase.database.ServerValue.TIMESTAMP
       };
 
-      try {
-        await set(myPlayerRef, me);
-        onDisconnect(myPlayerRef).remove();
+      await myPlayerRef.set(me);
+      myPlayerRef.onDisconnect().remove();
 
-        // Listen to other players
-        const playersRef = ref(rtdb, `rooms/${world.id}/players`);
-        if (unsubPresence) unsubPresence();
-        unsubPresence = onValue(playersRef, (snap) => {
-          const val = snap.val() || {};
-          delete val[uid]; // Remove self
-          otherPlayers = val;
-        }, (error) => {
-          console.error("Error listening to players:", error);
-        });
+      // Listen to other players
+      const playersRef = rtdb.ref(`rooms/${world.id}/players`);
+      if (unsubPresence) unsubPresence();
+      
+      unsubPresence = playersRef.on('value', (snap) => {
+        const val = snap.val() || {};
+        delete val[uid]; // Remove self
+        otherPlayers = val;
+      });
 
-        updateWorldPlayerCount(world.id);
-      } catch (e) {
-        console.error("Error joining room:", e);
-      }
+      updateWorldPlayerCount(world.id);
     }
 
     window.playWorld = async (world) => {
       console.log('Starting world:', world);
       currentWorld = world;
-      $('currentWorldName').textContent = world.name;
+      document.getElementById('currentWorldName').textContent = world.name;
 
       // Hide menu, show game
       mainMenu.style.display = 'none';
@@ -579,14 +596,14 @@
 
       if (myPlayerRef) {
         try {
-          await remove(myPlayerRef);
+          await myPlayerRef.remove();
         } catch(e) {
           console.error('Error removing player:', e);
         }
       }
 
       if (unsubPresence) {
-        unsubPresence();
+        rtdb.ref(`rooms/${currentWorld.id}/players`).off('value', unsubPresence);
         unsubPresence = null;
       }
 
@@ -599,14 +616,13 @@
       mainMenu.style.display = 'block';
     };
 
-    /***** 5) Auth state handler - FIXED *****/
-    onAuthStateChanged(auth, async (user) => {
+    // Auth state handler
+    auth.onAuthStateChanged(async (user) => {
       if (user) {
-        console.log("User logged in:", user);
         // UI updates
-        $('userName').textContent = user.displayName || 'Player';
-        $('userEmail').textContent = user.email || '';
-        $('userAvatar').src = user.photoURL || 'https://via.placeholder.com/80';
+        document.getElementById('userName').textContent = user.displayName || 'Player';
+        document.getElementById('userEmail').textContent = user.email || '';
+        document.getElementById('userAvatar').src = user.photoURL || 'https://via.placeholder.com/80';
         
         authScreen.style.display = 'none';
         mainMenu.style.display = 'block';
@@ -623,7 +639,6 @@
           renderWorlds('publicWorldsGrid', worlds, true);
         });
       } else {
-        console.log("User logged out");
         // Clean up
         if (myWorldsUnsubscribe) {
           myWorldsUnsubscribe();
@@ -637,15 +652,15 @@
         // Show auth screen
         mainMenu.style.display = 'none';
         authScreen.style.display = 'flex';
-        $('loginForm').style.display = 'block';
-        $('registerForm').style.display = 'none';
+        loginForm.style.display = 'block';
+        registerForm.style.display = 'none';
         
         // Clear form fields
-        $('loginEmail').value = '';
-        $('loginPassword').value = '';
-        $('registerUsername').value = '';
-        $('registerEmail').value = '';
-        $('registerPassword').value = '';
+        document.getElementById('loginEmail').value = '';
+        document.getElementById('loginPassword').value = '';
+        document.getElementById('registerUsername').value = '';
+        document.getElementById('registerEmail').value = '';
+        document.getElementById('registerPassword').value = '';
       }
     });
   </script>
