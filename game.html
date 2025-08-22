@@ -1,717 +1,776 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Roblox 2D - Fixed Map Version</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); overflow: hidden; }
-    
-    /* Auth */
-    .auth-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 2000; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); }
-    .auth-container { background: #fff; padding: 32px; border-radius: 16px; width: min(420px,90vw); box-shadow: 0 20px 40px rgba(255,105,180,.3); }
-    .auth-container h2 { color: #d63384; margin-bottom: 20px; font-size: 1.8rem; text-align:center; }
-    .form-group { margin-bottom: 14px; }
-    .form-group label { display:block; margin-bottom:6px; color:#d63384; font-weight:600; }
-    .form-group input, .form-group select { width:100%; padding:12px; border:2px solid #f8d7da; border-radius:8px; font-size:16px; }
-    .form-group input:focus, .form-group select:focus { outline:none; border-color:#ff69b4; }
-    .auth-button { width:100%; background: linear-gradient(45deg, #ff69b4, #ff1493); border:none; padding:12px; color:#fff; font-weight:700; border-radius:10px; cursor:pointer; margin:8px 0; }
-    .google-btn { background: linear-gradient(45deg, #ff69b4, #db4437); }
-    .auth-toggle { color:#ff69b4; text-decoration:underline; cursor:pointer; margin-top:8px; display:block; text-align:center; }
-    .error-message { color:#dc3545; font-size:14px; min-height:18px; margin-top:6px; }
-
-    /* Menu */
-    .main-menu { display:none; position: fixed; inset: 0; z-index: 1500; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); }
-    .menu-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; background: rgba(255,255,255,.15); backdrop-filter: blur(10px); border-bottom:1px solid rgba(255,182,193,.3); }
-    .menu-title { color:#fff; font-size:1.6rem; font-weight:800; text-shadow: 2px 2px 4px rgba(0,0,0,.2); }
-    .user-info { display:flex; align-items:center; gap:12px; color:#fff; }
-    .user-avatar { width:42px; height:42px; border-radius:50%; border:2px solid #fff; object-fit:cover; }
-    .logout-btn { background: rgba(255,255,255,.3); border:1px solid #fff; color:#fff; padding:6px 12px; border-radius:8px; cursor:pointer; }
-    .menu-content { display:flex; height: calc(100vh - 66px); }
-    .menu-sidebar { width:280px; padding:16px; background: rgba(255,255,255,.12); backdrop-filter: blur(10px); border-right:1px solid rgba(255,182,193,.3); }
-    .menu-main { flex:1; padding:16px; overflow:auto; }
-    .sidebar-btn { width:100%; background: rgba(255,255,255,.15); border:1px solid rgba(255,182,193,.4); color:#fff; padding:12px; margin:8px 0; border-radius:10px; cursor:pointer; font-size:15px; transition:.2s; }
-    .sidebar-btn.active, .sidebar-btn:hover { background: rgba(255,255,255,.25); transform: translateX(4px); }
-    .section { display:none; }
-    .section.active { display:block; }
-    .section h3 { color:#fff; font-size:1.5rem; margin-bottom:10px; text-shadow: 1px 1px 2px rgba(0,0,0,.2); }
-    .worlds-grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap:14px; margin-top:10px; }
-    .world-card { background: rgba(255,255,255,.15); backdrop-filter: blur(10px); border:1px solid rgba(255,182,193,.3); border-radius:14px; padding:14px; }
-    .world-thumbnail { width:100%; height:110px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:22px; background: linear-gradient(45deg, #ff69b4, #ff1493); margin-bottom:8px; }
-    .world-info { color:#fff; }
-    .world-name { font-weight:800; }
-    .world-players { font-size:13px; opacity:.9; }
-    .play-world-btn { width:100%; background: linear-gradient(45deg, #ff69b4, #ff1493); border:none; padding:10px; color:#fff; font-weight:800; border-radius:8px; cursor:pointer; margin-top:8px; }
-    .create-world-btn { background: linear-gradient(45deg, #ff69b4, #ff1493); border:none; padding:12px 18px; color:#fff; border-radius:10px; cursor:pointer; font-weight:800; margin:6px 0 14px; }
-
-    /* Game */
-    .game-container { display:none; position: fixed; inset: 0; }
-    #gameCanvas { display:block; background:#ffc0cb; width:100vw; height:100vh; }
-    .back-btn { position:absolute; top:16px; right:16px; background: rgba(255,105,180,.8); color:#fff; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; z-index:100; }
-    .ui-overlay { position:absolute; top:16px; left:16px; color:#fff; font-weight:700; text-shadow: 2px 2px 4px rgba(0,0,0,.6); z-index:100; }
-    .controls { position:absolute; bottom:16px; left:16px; color:#fff; font-size:14px; text-shadow: 2px 2px 4px rgba(0,0,0,.6); z-index:100; }
-
-    .modal { position:fixed; inset:0; background: rgba(0,0,0,.8); display:none; align-items:center; justify-content:center; z-index:3000; }
-    .modal-content { background:#fff; padding:20px; border-radius:12px; width:min(520px,92vw); }
-    .modal-content h3 { margin-bottom:10px; color:#d63384; }
-
-    @media (max-width: 768px) {
-      .menu-content { flex-direction: column; }
-      .menu-sidebar { width:100%; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Roblox Multiplayer</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            color: #333;
+        }
+        /* Menu Screen */
+        .menu-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 1000;
+        }
+        .menu-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            min-width: 500px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        .title {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+            text-align: left;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            padding: 15px 30px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            margin: 5px;
+        }
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .btn-create {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+        .btn-join {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        }
+        .status-bar {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        .rooms-container {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .room-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(255,255,255,0.7);
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.1);
+            transition: background 0.2s;
+        }
+        .room-card:hover {
+            background: rgba(255,255,255,0.9);
+        }
+        .room-info {
+            text-align: left;
+        }
+        .room-name {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+        }
+        .room-details {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        /* Game Screen */
+        .game-container {
+            display: none;
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #gameCanvas {
+            display: block;
+            background: #87CEEB;
+        }
+        .ui-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            z-index: 100;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-size: 14px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            z-index: 100;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+        }
+        .top-right {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        .btn-ghost {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: background 0.2s;
+        }
+        .btn-ghost:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .players-list {
+            position: absolute;
+            top: 150px;
+            left: 20px;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            color: white;
+            font-size: 14px;
+            z-index: 100;
+            max-height: 200px;
+            overflow-y: auto;
+            min-width: 150px;
+        }
+        .player-item {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        @media (max-width: 768px) {
+            .menu-container {
+                min-width: 90%;
+                padding: 30px 20px;
+            }
+            .title {
+                font-size: 2.5rem;
+            }
+            .form-row {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
-  <!-- AUTH -->
-  <div class="auth-screen" id="authScreen">
-    <div class="auth-container">
-      <div id="loginForm">
-        <h2>Login to Roblox 2D</h2>
-        <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com" /></div>
-        <div class="form-group"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••" /></div>
-        <button class="auth-button" id="loginBtn">Login</button>
-        <button class="auth-button google-btn" id="googleBtn">Sign in with Google</button>
-        <span class="auth-toggle" id="toRegister">Don't have an account? Register</span>
-        <div class="error-message" id="loginError"></div>
-      </div>
-
-      <div id="registerForm" style="display:none;">
-        <h2>Register for Roblox 2D</h2>
-        <div class="form-group"><label>Username</label><input type="text" id="registerUsername" placeholder="Display name" /></div>
-        <div class="form-group"><label>Email</label><input type="email" id="registerEmail" placeholder="you@example.com" /></div>
-        <div class="form-group"><label>Password</label><input type="password" id="registerPassword" placeholder="At least 6 characters" /></div>
-        <button class="auth-button" id="registerBtn">Register</button>
-        <button class="auth-button google-btn" id="googleBtn2">Sign in with Google</button>
-        <span class="auth-toggle" id="toLogin">Already have an account? Login</span>
-        <div class="error-message" id="registerError"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MENU -->
-  <div class="main-menu" id="mainMenu">
-    <div class="menu-header">
-      <div class="menu-title">Roblox 2D</div>
-      <div class="user-info">
-        <img id="userAvatar" class="user-avatar" src="https://via.placeholder.com/80" alt="avatar" />
-        <div>
-          <div id="userName">—</div>
-          <div id="userEmail" style="font-size:12px; opacity:.8;">—</div>
+    <!-- Menu Screen -->
+    <div id="menu" class="menu-screen">
+        <div class="menu-container">
+            <h1 class="title">🎮 ROBLOX 2D</h1>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Your Name:</label>
+                    <input id="playerName" placeholder="Enter your name" maxlength="20">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>World Name:</label>
+                    <input id="worldName" placeholder="My Awesome World" maxlength="30">
+                </div>
+                <div class="form-group">
+                    <label>Map Type:</label>
+                    <select id="mapType">
+                        <option value="Grasslands">🌱 Grasslands</option>
+                        <option value="Desert Oasis">🏜️ Desert Oasis</option>
+                        <option value="Volcanic Island">🌋 Volcanic Island</option>
+                        <option value="Winter Wonderland">❄️ Winter Wonderland</option>
+                        <option value="Forest Grove">🌲 Forest Grove</option>
+                        <option value="Rocky Canyon">🏔️ Rocky Canyon</option>
+                    </select>
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <button class="btn btn-create" id="createBtn">Create World</button>
+                <button class="btn" onclick="loadRooms()">Refresh Rooms</button>
+            </div>
+            <div id="statusBar" class="status-bar">Connecting to server...</div>
+            <div class="rooms-container">
+                <h3 style="color: #667eea; margin-bottom: 15px;">🌍 Available Worlds</h3>
+                <div id="roomsList">
+                    <div class="room-card">
+                        <div class="room-info">
+                            <div class="room-name">Loading worlds...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <button class="logout-btn" id="logoutBtn">Logout</button>
-      </div>
     </div>
-    <div class="menu-content">
-      <div class="menu-sidebar">
-        <button class="sidebar-btn active" onclick="showSection(event,'myWorlds')">My Worlds</button>
-        <button class="sidebar-btn" onclick="showSection(event,'publicWorlds')">Public Worlds</button>
-        <button class="sidebar-btn" onclick="showSection(event,'friends')">Friends</button>
-        <button class="sidebar-btn" onclick="showSection(event,'profile')">Profile</button>
-      </div>
-      <div class="menu-main">
-        <div id="myWorlds" class="section active">
-          <h3>My Worlds</h3>
-          <button class="create-world-btn" onclick="showCreateWorldModal()">+ Create New World</button>
-          <div class="worlds-grid" id="myWorldsGrid"><p style="color:#fff">Loading your worlds…</p></div>
+
+    <!-- Game Screen -->
+    <div id="game" class="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div class="ui-overlay">
+            <div><strong id="roomInfo">Room Loading...</strong></div>
+            <div>Map: <span id="currentMapType">Loading...</span></div>
+            <div>Players Online: <span id="playerCount">0</span></div>
         </div>
-        <div id="publicWorlds" class="section">
-          <h3>Public Worlds</h3>
-          <div class="worlds-grid" id="publicWorldsGrid"><p style="color:#fff">Loading public worlds…</p></div>
+        <div class="players-list" id="playersList">
+            <strong>Players:</strong>
+            <div id="playersContent">Loading...</div>
         </div>
-        <div id="friends" class="section">
-          <h3>Friends</h3>
-          <p style="color:#fff">Friend system coming soon!</p>
+        <div class="controls">
+            <strong>Controls:</strong><br>
+            WASD or Arrow Keys to move<br>
+            🎮 Explore the world with friends!
         </div>
-        <div id="profile" class="section">
-          <h3>Profile Settings</h3>
-          <p style="color:#fff">Profile customization coming soon!</p>
+        <div class="top-right">
+            <button id="leaveBtn" class="btn-ghost">Leave World</button>
         </div>
-      </div>
     </div>
-  </div>
 
-  <!-- CREATE WORLD MODAL -->
-  <div class="modal" id="createWorldModal">
-    <div class="modal-content">
-      <h3>Create New World</h3>
-      <div class="form-group"><label>World Name</label><input id="worldName" placeholder="Enter world name" /></div>
-      <div class="form-group"><label>World Type</label>
-        <select id="worldType">
-          <option value="Grasslands">Grasslands</option>
-          <option value="Desert Oasis">Desert Oasis</option>
-          <option value="Volcanic Island">Volcanic Island</option>
-          <option value="Winter Wonderland">Winter Wonderland</option>
-          <option value="Forest Grove">Forest Grove</option>
-          <option value="Rocky Canyon">Rocky Canyon</option>
-        </select>
-      </div>
-      <div class="form-group"><label><input type="checkbox" id="worldPublic" /> Make this world public</label></div>
-      <button class="auth-button" onclick="createWorld()">Create World</button>
-      <button class="auth-button" style="background:#666" onclick="closeCreateWorldModal()">Cancel</button>
-      <div class="error-message" id="createWorldError"></div>
-    </div>
-  </div>
+    <script>
+        // ---------- Supabase Configuration ----------
+        const SUPABASE_URL = "https://chumxrvwpxmxttbbvemp.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNodW14cnZ3cHhteHR0YmJ2ZW1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4OTIxMjcsImV4cCI6MjA3MTQ2ODEyN30.__GvVFs6SwJVKLUuz6Y7aA8R5wxDWlBeA8qhKpQrCbc";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  <!-- GAME -->
-  <div class="game-container" id="gameContainer">
-    <canvas id="gameCanvas"></canvas>
-    <button class="back-btn" onclick="backToMenu()">Back to Menu</button>
-    <div class="ui-overlay">
-      <div>World: <span id="currentWorldName">—</span></div>
-      <div>Players: <span id="playerCount">1</span>/50</div>
-    </div>
-    <div class="controls">Use WASD / Arrow Keys to move</div>
-  </div>
+        // ---------- DOM Elements ----------
+        const menu = document.getElementById("menu");
+        const gameDiv = document.getElementById("game");
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const statusBar = document.getElementById("statusBar");
+        const roomsList = document.getElementById("roomsList");
+        const roomInfo = document.getElementById("roomInfo");
+        const currentMapType = document.getElementById("currentMapType");
+        const playerCount = document.getElementById("playerCount");
+        const playersList = document.getElementById("playersList");
+        const playersContent = document.getElementById("playersContent");
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-  <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
-      authDomain: "boat-revival.firebaseapp.com",
-      projectId: "boat-revival",
-      storageBucket: "boat-revival.appspot.com",
-      messagingSenderId: "207519236382",
-      appId: "1:207519236382:web:3a61a1b8811fd811e0c90f",
-      databaseURL: "https://boat-revival-default-rtdb.firebaseio.com"
-    };
-
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const rtdb = firebase.database();
-    const googleProvider = new firebase.auth.GoogleAuthProvider();
-
-    // UI Elements
-    const authScreen = document.getElementById('authScreen');
-    const mainMenu = document.getElementById('mainMenu');
-    const gameContainer = document.getElementById('gameContainer');
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    
-    // UI Helpers
-    function showSection(e, name) {
-      document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
-      e.currentTarget.classList.add('active');
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.getElementById(name).classList.add('active');
-    }
-
-    // Auth toggles
-    document.getElementById('toRegister').onclick = () => { 
-      loginForm.style.display = 'none'; 
-      registerForm.style.display = 'block'; 
-      document.getElementById('loginError').textContent = ''; 
-    };
-    
-    document.getElementById('toLogin').onclick = () => { 
-      registerForm.style.display = 'none'; 
-      loginForm.style.display = 'block'; 
-      document.getElementById('registerError').textContent = ''; 
-    };
-
-    // Auth buttons
-    document.getElementById('loginBtn').onclick = async () => {
-      const email = document.getElementById('loginEmail').value.trim();
-      const pass = document.getElementById('loginPassword').value;
-      const err = document.getElementById('loginError');
-      
-      if (!email || !pass) return err.textContent = 'Please fill in all fields';
-      
-      try {
-        await auth.signInWithEmailAndPassword(email, pass);
-        err.textContent = '';
-      } catch (e) { 
-        err.textContent = e.message; 
-      }
-    };
-
-    document.getElementById('registerBtn').onclick = async () => {
-      const username = document.getElementById('registerUsername').value.trim();
-      const email = document.getElementById('registerEmail').value.trim();
-      const pass = document.getElementById('registerPassword').value;
-      const err = document.getElementById('registerError');
-      
-      if (!username || !email || !pass) return err.textContent = 'Please fill in all fields';
-      
-      try {
-        const cred = await auth.createUserWithEmailAndPassword(email, pass);
-        await cred.user.updateProfile({ displayName: username });
-        err.textContent = '';
-      } catch (e) { 
-        err.textContent = e.message; 
-      }
-    };
-
-    document.getElementById('googleBtn').onclick = () => 
-      auth.signInWithPopup(googleProvider).catch(e => 
-        document.getElementById('loginError').textContent = e.message);
+        // ---------- Game Variables ----------
+        let currentRoom = null;
+        let player = { 
+            id: null, 
+            name: "", 
+            x: 400, 
+            y: 300, 
+            color: '#ff6b6b',
+            lastUpdate: 0
+        };
+        let otherPlayers = [];
+        let worldMap = [];
+        let keys = {};
+        let gameRunning = false;
+        let camera = { x: 0, y: 0 };
+        let lastPlayerFetch = 0;
+        let lastPositionUpdate = 0;
         
-    document.getElementById('googleBtn2').onclick = () => 
-      auth.signInWithPopup(googleProvider).catch(e => 
-        document.getElementById('registerError').textContent = e.message);
+        // Map configuration
+        const mapWidth = 2000;
+        const mapHeight = 1500;
+        const tileSize = 64;
         
-    document.getElementById('logoutBtn').onclick = () => auth.signOut();
+        // Texture patterns
+        const textures = {
+            grass: '#4a7c59',
+            stone: '#8b8680',
+            sand: '#f4e4bc',
+            water: '#4a90e2',
+            lava: '#ff4757',
+            snow: '#ffffff',
+            dirt: '#8b4513',
+            wood: '#deb887'
+        };
+        
+        const mapTypeConfigs = {
+            'Grasslands': { primary: 'grass', secondary: 'stone', emoji: '🌱' },
+            'Desert Oasis': { primary: 'sand', secondary: 'water', emoji: '🏜️' },
+            'Volcanic Island': { primary: 'stone', secondary: 'lava', emoji: '🌋' },
+            'Winter Wonderland': { primary: 'snow', secondary: 'water', emoji: '❄️' },
+            'Forest Grove': { primary: 'grass', secondary: 'wood', emoji: '🌲' },
+            'Rocky Canyon': { primary: 'stone', secondary: 'dirt', emoji: '🏔️' }
+        };
 
-    // Worlds Management
-    const worldsCol = db.collection('worlds');
-    let myWorldsUnsubscribe = null;
-    let publicWorldsUnsubscribe = null;
+        // Set canvas size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-    async function createWorldDoc({ name, type, isPublic, owner }) {
-      const worldId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-      await worldsCol.doc(worldId).set({
-        id: worldId,
-        name,
-        type,
-        public: !!isPublic,
-        owner: owner.uid,
-        ownerName: owner.displayName || 'Anonymous',
-        ownerPhoto: owner.photoURL || '',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        players: 0
-      });
-      return worldId;
-    }
-
-    function loadMyWorlds(uid, cb) {
-      if (myWorldsUnsubscribe) myWorldsUnsubscribe();
-      
-      return worldsCol
-        .where('owner', '==', uid)
-        .orderBy('createdAt', 'desc')
-        .onSnapshot(snap => {
-          const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          cb(arr);
-        }, error => {
-          console.error("Error loading my worlds:", error);
+        // ---------- Input Handling ----------
+        window.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            e.preventDefault();
         });
-    }
 
-    function loadPublicWorlds(cb) {
-      if (publicWorldsUnsubscribe) publicWorldsUnsubscribe();
-      
-      return worldsCol
-        .where('public', '==', true)
-        .orderBy('createdAt', 'desc')
-        .onSnapshot(snap => {
-          const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          cb(arr);
-        }, error => {
-          console.error("Error loading public worlds:", error);
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
         });
-    }
 
-    function renderWorlds(gridId, list, showOwner = false) {
-      const grid = document.getElementById(gridId);
-      grid.innerHTML = '';
-      
-      if (!list.length) { 
-        grid.innerHTML = '<p style="color:#fff">No worlds yet.</p>'; 
-        return; 
-      }
-      
-      for (const w of list) {
-        const el = document.createElement('div');
-        el.className = 'world-card';
-        el.innerHTML = `
-          <div class="world-thumbnail">🌍</div>
-          <div class="world-info">
-            <div class="world-name">${w.name}</div>
-            <div class="world-players">${w.type} • ${w.players || 0}/50 players</div>
-            <div style="font-size:12px; opacity:.7; margin-top:4px;">${w.public ? 'Public' : 'Private'}${showOwner ? ` • by ${w.ownerName || 'Unknown'}` : ''}</div>
-          </div>
-          <button class="play-world-btn" data-id="${w.id}">Play</button>
-        `;
-        el.querySelector('button').onclick = () => playWorld(w);
-        grid.appendChild(el);
-      }
-    }
-
-    // Modal controls
-    window.showCreateWorldModal = () => document.getElementById('createWorldModal').style.display = 'flex';
-    window.closeCreateWorldModal = () => { 
-      document.getElementById('createWorldModal').style.display = 'none'; 
-      document.getElementById('worldName').value = ''; 
-      document.getElementById('worldPublic').checked = false; 
-      document.getElementById('createWorldError').textContent = ''; 
-    };
-
-    window.createWorld = async () => {
-      const name = document.getElementById('worldName').value.trim();
-      const type = document.getElementById('worldType').value;
-      const isPublic = document.getElementById('worldPublic').checked;
-      const err = document.getElementById('createWorldError');
-      
-      if (!auth.currentUser) return err.textContent = 'Not logged in';
-      if (!name) return err.textContent = 'Please enter a world name';
-      
-      try {
-        const id = await createWorldDoc({ name, type, isPublic, owner: auth.currentUser });
-        closeCreateWorldModal();
-      } catch(e) { 
-        err.textContent = e.message; 
-      }
-    };
-
-    // Game Engine
-    const MAP_W = 2000, MAP_H = 1500, TILE = 64;
-    const mapTypes = {
-      'Grasslands': { primary: '#7ec850', secondary: '#5a9c38', pattern: '🌿' },
-      'Desert Oasis': { primary: '#f4d675', secondary: '#e6b566', pattern: '🏜️' },
-      'Volcanic Island': { primary: '#d14545', secondary: '#9c3131', pattern: '🌋' },
-      'Winter Wonderland': { primary: '#e8f4ff', secondary: '#c8e6ff', pattern: '❄️' },
-      'Forest Grove': { primary: '#3a7d44', secondary: '#295532', pattern: '🌲' },
-      'Rocky Canyon': { primary: '#a5a5a5', secondary: '#7a7a7a', pattern: '🗿' }
-    };
-
-    let canvas = document.getElementById('gameCanvas');
-    let ctx = canvas.getContext('2d');
-    let keys = {};
-    let camera = { x: 0, y: 0 };
-    let player = { x: 400, y: 300, width: 32, height: 32, speed: 5, color: '#ff1493' };
-    let currentWorld = null;
-    let tiles = [];
-    let roomRef = null, myPlayerRef = null, unsubPresence = null;
-    let otherPlayers = {};
-    let gameRunning = false;
-
-    // Event listeners
-    window.addEventListener('keydown', (e) => { keys[e.code] = true; });
-    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
-    window.addEventListener('resize', resizeCanvas);
-
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    resizeCanvas();
-
-    // Improved map generation
-    function generateMap(type) {
-      console.log('Generating map for type:', type);
-      const cfg = mapTypes[type] || mapTypes['Grasslands'];
-      tiles = [];
-      const cols = Math.ceil(MAP_W / TILE);
-      const rows = Math.ceil(MAP_H / TILE);
-
-      // Create a more visually distinct pattern
-      for (let y = 0; y < rows; y++) {
-        tiles[y] = [];
-        for (let x = 0; x < cols; x++) {
-          // More pronounced noise pattern
-          const n = Math.sin(x * 0.2) * Math.cos(y * 0.2) + 
-                    Math.sin(x * 0.1) * Math.cos(y * 0.1) * 0.5 +
-                    Math.random() * 0.2;
-          
-          // Create more distinct regions
-          if (n > 0.4) {
-            tiles[y][x] = { color: cfg.primary, pattern: cfg.pattern };
-          } else if (n > 0) {
-            tiles[y][x] = { color: cfg.secondary, pattern: cfg.pattern };
-          } else if (n > -0.3) {
-            tiles[y][x] = { color: lightenColor(cfg.primary, 20), pattern: cfg.pattern };
-          } else {
-            tiles[y][x] = { color: darkenColor(cfg.secondary, 15), pattern: cfg.pattern };
-          }
-        }
-      }
-      console.log('Map generated with', rows, 'rows and', cols, 'cols');
-    }
-
-    // Helper functions for color manipulation
-    function lightenColor(color, percent) {
-      const num = parseInt(color.replace('#', ''), 16);
-      const amt = Math.round(2.55 * percent);
-      const R = Math.min(255, ((num >> 16) + amt));
-      const G = Math.min(255, ((num >> 8 & 0x00FF) + amt));
-      const B = Math.min(255, ((num & 0x0000FF) + amt));
-      return '#' + ((1 << 24) + (R << 16) + (G << 8) + B).toString(16).slice(1);
-    }
-
-    function darkenColor(color, percent) {
-      const num = parseInt(color.replace('#', ''), 16);
-      const amt = Math.round(2.55 * percent);
-      const R = Math.max(0, ((num >> 16) - amt));
-      const G = Math.max(0, ((num >> 8 & 0x00FF) - amt));
-      const B = Math.max(0, ((num & 0x0000FF) - amt));
-      return '#' + ((1 << 24) + (R << 16) + (G << 8) + B).toString(16).slice(1);
-    }
-
-    function handleInput() {
-      if (!gameRunning) return;
-
-      let dx = 0, dy = 0;
-      if (keys['ArrowLeft'] || keys['KeyA']) dx -= player.speed;
-      if (keys['ArrowRight'] || keys['KeyD']) dx += player.speed;
-      if (keys['ArrowUp'] || keys['KeyW']) dy -= player.speed;
-      if (keys['ArrowDown'] || keys['KeyS']) dy += player.speed;
-
-      // Diagonal movement normalization
-      if (dx && dy) {
-        dx *= 0.707;
-        dy *= 0.707;
-      }
-
-      // Update player position with bounds checking
-      player.x = Math.max(16, Math.min(MAP_W - 16, player.x + dx));
-      player.y = Math.max(16, Math.min(MAP_H - 16, player.y + dy));
-
-      // Update camera to follow player
-      camera.x = Math.max(0, Math.min(MAP_W - canvas.width, player.x - canvas.width / 2));
-      camera.y = Math.max(0, Math.min(MAP_H - canvas.height, player.y - canvas.height / 2));
-    }
-
-    function drawMap() {
-      if (!tiles.length) {
-        // Draw a temporary background if map isn't generated
-        ctx.fillStyle = '#ffc0cb';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        return;
-      }
-
-      const startX = Math.max(0, Math.floor(camera.x / TILE));
-      const startY = Math.max(0, Math.floor(camera.y / TILE));
-      const endX = Math.min(tiles[0].length, Math.ceil((camera.x + canvas.width) / TILE));
-      const endY = Math.min(tiles.length, Math.ceil((camera.y + canvas.height) / TILE));
-
-      for (let y = startY; y < endY; y++) {
-        for (let x = startX; x < endX; x++) {
-          if (!tiles[y] || !tiles[y][x]) continue;
-
-          const tile = tiles[y][x];
-          ctx.fillStyle = tile.color;
-          ctx.fillRect(
-            x * TILE - camera.x,
-            y * TILE - camera.y,
-            TILE,
-            TILE
-          );
-          
-          // Add a subtle grid
-          ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
-          ctx.strokeRect(
-            x * TILE - camera.x,
-            y * TILE - camera.y,
-            TILE,
-            TILE
-          );
-        }
-      }
-    }
-
-    function drawPlayers() {
-      // Draw other players
-      for (const uid in otherPlayers) {
-        const p = otherPlayers[uid];
-        if (!p || !p.pos) continue;
-
-        ctx.fillStyle = p.color || '#ff69b4';
-        ctx.beginPath();
-        ctx.arc(p.pos.x - camera.x, p.pos.y - camera.y, 16, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Player name
-        ctx.fillStyle = '#fff';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(p.name || 'Player', p.pos.x - camera.x, p.pos.y - camera.y - 20);
-      }
-
-      // Draw current player
-      ctx.fillStyle = player.color;
-      ctx.beginPath();
-      ctx.arc(player.x - camera.x, player.y - camera.y, 16, 0, Math.PI * 2);
-      ctx.fill();
-      
-      // Add a white border to the player
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-
-    let lastSend = 0;
-    function maybeSendPosition() {
-      const now = performance.now();
-      if (now - lastSend < 50) return; // ~20 Hz
-      lastSend = now;
-
-      if (myPlayerRef) {
-        myPlayerRef.update({
-          pos: { x: Math.round(player.x), y: Math.round(player.y) },
-          ts: firebase.database.ServerValue.TIMESTAMP
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
         });
-      }
-    }
 
-    function gameLoop() {
-      if (!gameRunning || !currentWorld) return;
+        // ---------- Room Management ----------
+        document.getElementById("createBtn").onclick = async () => {
+            const name = document.getElementById("playerName").value.trim();
+            const worldName = document.getElementById("worldName").value.trim() || "Unnamed World";
+            const mapType = document.getElementById("mapType").value;
+            
+            // Validate name
+            if (!name) {
+                statusBar.textContent = "Please enter your name first!";
+                document.getElementById("playerName").focus();
+                return;
+            }
+            
+            player.name = name;
+            statusBar.textContent = "Creating world...";
+            
+            try {
+                const map = generateMap(Math.ceil(mapWidth / tileSize), Math.ceil(mapHeight / tileSize), mapType);
+                const { data, error } = await supabase
+                    .from("rooms")
+                    .insert([{ 
+                        name: worldName, 
+                        map_type: mapType, 
+                        map: map, 
+                        created_by: name, 
+                        max_players: 50 
+                    }])
+                    .select()
+                    .single();
+                    
+                if (error) {
+                    statusBar.textContent = "Error creating world: " + error.message;
+                    return;
+                }
+                
+                statusBar.textContent = "World created! Joining...";
+                joinRoom(data.id, worldName, mapType);
+            } catch (error) {
+                statusBar.textContent = "Error: " + error.message;
+            }
+        };
 
-      handleInput();
-
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // Draw game world
-      drawMap();
-      drawPlayers();
-
-      // Send player position
-      maybeSendPosition();
-
-      requestAnimationFrame(gameLoop);
-    }
-
-    function updateWorldPlayerCount(worldId) {
-      const playersRef = rtdb.ref(`rooms/${worldId}/players`);
-      playersRef.on('value', async (snap) => {
-        const val = snap.val() || {};
-        const count = Object.keys(val).length;
-        document.getElementById('playerCount').textContent = count;
-        try {
-          await worldsCol.doc(worldId).update({ players: count });
-        } catch(e) {
-          console.error('Error updating player count:', e);
+        // ---------- Join Room ----------
+        async function joinRoom(roomId, roomName, mapType) {
+            const name = document.getElementById("playerName").value.trim();
+            
+            if (!name) {
+                statusBar.textContent = "Please enter your name first!";
+                document.getElementById("playerName").focus();
+                return;
+            }
+            
+            player.name = name;
+            currentRoom = roomId;
+            statusBar.textContent = "Joining world...";
+            
+            try {
+                // Add player to room
+                const { data, error } = await supabase
+                    .from("players")
+                    .insert([{ 
+                        room_id: roomId, 
+                        name: player.name, 
+                        x: player.x, 
+                        y: player.y, 
+                        color: player.color 
+                    }])
+                    .select()
+                    .single();
+                    
+                if (error) {
+                    statusBar.textContent = "Join error: " + error.message;
+                    return;
+                }
+                
+                player.id = data.id;
+                player.color = data.color;
+                
+                // Load room data
+                const { data: roomData, error: roomError } = await supabase
+                    .from("rooms")
+                    .select("*")
+                    .eq("id", roomId)
+                    .single();
+                    
+                if (roomError) {
+                    statusBar.textContent = "Error loading world data";
+                    return;
+                }
+                
+                worldMap = roomData.map;
+                startGame(roomName || roomData.name, mapType || roomData.map_type);
+            } catch (error) {
+                statusBar.textContent = "Error joining world: " + error.message;
+            }
         }
-      });
-    }
 
-    async function joinRoom(world) {
-      const uid = auth.currentUser.uid;
-      roomRef = rtdb.ref(`rooms/${world.id}`);
-      myPlayerRef = rtdb.ref(`rooms/${world.id}/players/${uid}`);
+        // ---------- Leave Room ----------
+        document.getElementById("leaveBtn").onclick = async () => {
+            if (player.id) {
+                await supabase.from("players").delete().eq("id", player.id);
+            }
+            gameRunning = false;
+            location.reload();
+        };
 
-      const me = {
-        uid,
-        name: auth.currentUser.displayName || 'Anonymous',
-        photo: auth.currentUser.photoURL || '',
-        color: player.color,
-        pos: { x: player.x, y: player.y },
-        joinedAt: firebase.database.ServerValue.TIMESTAMP
-      };
-
-      await myPlayerRef.set(me);
-      myPlayerRef.onDisconnect().remove();
-
-      // Listen to other players
-      const playersRef = rtdb.ref(`rooms/${world.id}/players`);
-      if (unsubPresence) unsubPresence();
-      
-      unsubPresence = playersRef.on('value', (snap) => {
-        const val = snap.val() || {};
-        delete val[uid]; // Remove self
-        otherPlayers = val;
-      });
-
-      updateWorldPlayerCount(world.id);
-    }
-
-    window.playWorld = async (world) => {
-      console.log('Starting world:', world);
-      currentWorld = world;
-      document.getElementById('currentWorldName').textContent = world.name;
-
-      // Hide menu, show game
-      mainMenu.style.display = 'none';
-      gameContainer.style.display = 'block';
-
-      // Reset player position
-      player.x = MAP_W / 2;
-      player.y = MAP_H / 2;
-      camera.x = player.x - canvas.width / 2;
-      camera.y = player.y - canvas.height / 2;
-
-      // Generate world map
-      generateMap(world.type);
-      resizeCanvas();
-
-      // Join multiplayer room
-      await joinRoom(world);
-
-      // Start game loop
-      gameRunning = true;
-      requestAnimationFrame(gameLoop);
-    };
-
-    window.backToMenu = async () => {
-      gameRunning = false;
-
-      if (myPlayerRef) {
-        try {
-          await myPlayerRef.remove();
-        } catch(e) {
-          console.error('Error removing player:', e);
+        // ---------- Load Available Rooms ----------
+        async function loadRooms() {
+            try {
+                const { data, error } = await supabase
+                    .from("rooms")
+                    .select(`id, name, map_type, created_by, max_players, created_at, players(count)`)
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+                    
+                if (error) {
+                    statusBar.textContent = "Error loading rooms: " + error.message;
+                    return;
+                }
+                
+                roomsList.innerHTML = "";
+                
+                if (!data || data.length === 0) {
+                    roomsList.innerHTML = `
+                        <div class="room-card">
+                            <div class="room-info">
+                                <div class="room-name">No worlds available</div>
+                                <div class="room-details">Create the first world!</div>
+                            </div>
+                        </div>
+                    `;
+                    statusBar.textContent = "No worlds found. Create one!";
+                    return;
+                }
+                
+                data.forEach(room => {
+                    const playerCount = room.players?.[0]?.count || 0;
+                    const mapConfig = mapTypeConfigs[room.map_type] || { emoji: '🌍' };
+                    
+                    const roomCard = document.createElement("div");
+                    roomCard.className = "room-card";
+                    roomCard.innerHTML = `
+                        <div class="room-info">
+                            <div class="room-name">${mapConfig.emoji} ${room.name}</div>
+                            <div class="room-details">
+                                ${room.map_type} • ${playerCount}/${room.max_players} players<br>
+                                Created by ${room.created_by}
+                            </div>
+                        </div>
+                        <button class="btn btn-join" onclick="joinRoom(${room.id}, '${room.name.replace(/'/g, "\\'")}', '${room.map_type}')">
+                            Join
+                        </button>
+                    `;
+                    
+                    roomsList.appendChild(roomCard);
+                });
+                
+                statusBar.textContent = `Found ${data.length} world(s). Choose one to join!`;
+            } catch (error) {
+                statusBar.textContent = "Connection error: " + error.message;
+            }
         }
-      }
 
-      if (unsubPresence) {
-        rtdb.ref(`rooms/${currentWorld.id}/players`).off('value', unsubPresence);
-        unsubPresence = null;
-      }
+        // Load rooms on startup and refresh every 5 seconds
+        loadRooms();
+        setInterval(loadRooms, 5000);
 
-      currentWorld = null;
-      otherPlayers = {};
-      roomRef = null;
-      myPlayerRef = null;
-
-      gameContainer.style.display = 'none';
-      mainMenu.style.display = 'block';
-    };
-
-    // Auth state handler
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        // UI updates
-        document.getElementById('userName').textContent = user.displayName || 'Player';
-        document.getElementById('userEmail').textContent = user.email || '';
-        document.getElementById('userAvatar').src = user.photoURL || 'https://via.placeholder.com/80';
-        
-        authScreen.style.display = 'none';
-        mainMenu.style.display = 'block';
-
-        // Load worlds data
-        if (myWorldsUnsubscribe) myWorldsUnsubscribe();
-        if (publicWorldsUnsubscribe) publicWorldsUnsubscribe();
-        
-        myWorldsUnsubscribe = loadMyWorlds(user.uid, (worlds) => {
-          renderWorlds('myWorldsGrid', worlds);
-        });
-        
-        publicWorldsUnsubscribe = loadPublicWorlds((worlds) => {
-          renderWorlds('publicWorldsGrid', worlds, true);
-        });
-      } else {
-        // Clean up
-        if (myWorldsUnsubscribe) {
-          myWorldsUnsubscribe();
-          myWorldsUnsubscribe = null;
+        // ---------- Map Generation ----------
+        function generateMap(width, height, mapType) {
+            const config = mapTypeConfigs[mapType] || mapTypeConfigs['Grasslands'];
+            const map = [];
+            
+            for (let y = 0; y < height; y++) {
+                const row = [];
+                for (let x = 0; x < width; x++) {
+                    // Use noise-like pattern for varied terrain
+                    const noise = Math.sin(x * 0.1) * Math.cos(y * 0.1) + Math.sin(x * 0.05) * Math.cos(y * 0.05) * 0.5;
+                    let tileType;
+                    
+                    if (noise > 0.2) {
+                        tileType = config.secondary;
+                    } else {
+                        tileType = config.primary;
+                    }
+                    
+                    // Add random variation
+                    if (Math.random() < 0.1) {
+                        const randomTexture = Object.keys(textures)[Math.floor(Math.random() * Object.keys(textures).length)];
+                        tileType = randomTexture;
+                    }
+                    
+                    row.push(tileType);
+                }
+                map.push(row);
+            }
+            
+            return map;
         }
-        if (publicWorldsUnsubscribe) {
-          publicWorldsUnsubscribe();
-          publicWorldsUnsubscribe = null;
+
+        // ---------- Game Loop ----------
+        function startGame(roomName, mapType) {
+            menu.style.display = "none";
+            gameDiv.style.display = "block";
+            roomInfo.textContent = roomName;
+            currentMapType.textContent = mapType;
+            gameRunning = true;
+            requestAnimationFrame(gameLoop);
         }
-        
-        // Show auth screen
-        mainMenu.style.display = 'none';
-        authScreen.style.display = 'flex';
-        loginForm.style.display = 'block';
-        registerForm.style.display = 'none';
-        
-        // Clear form fields
-        document.getElementById('loginEmail').value = '';
-        document.getElementById('loginPassword').value = '';
-        document.getElementById('registerUsername').value = '';
-        document.getElementById('registerEmail').value = '';
-        document.getElementById('registerPassword').value = '';
-      }
-    });
-  </script>
+
+        async function gameLoop(timestamp) {
+            if (!gameRunning) return;
+            
+            // Handle input
+            let dx = 0, dy = 0;
+            const speed = 8; // Increased speed for better movement
+            
+            if (keys["w"] || keys["arrowup"]) dy -= speed;
+            if (keys["s"] || keys["arrowdown"]) dy += speed;
+            if (keys["a"] || keys["arrowleft"]) dx -= speed;
+            if (keys["d"] || keys["arrowright"]) dx += speed;
+            
+            // Diagonal movement normalization
+            if (dx !== 0 && dy !== 0) {
+                dx *= 0.707;
+                dy *= 0.707;
+            }
+            
+            // Update player position with boundary checking
+            if (dx !== 0 || dy !== 0) {
+                player.x = Math.max(16, Math.min(mapWidth - 16, player.x + dx));
+                player.y = Math.max(16, Math.min(mapHeight - 16, player.y + dy));
+                
+                // Update player position in database (throttled to improve performance)
+                if (player.id && timestamp - lastPositionUpdate > 100) { // Update every 100ms
+                    lastPositionUpdate = timestamp;
+                    await supabase
+                        .from("players")
+                        .update({ x: player.x, y: player.y })
+                        .eq("id", player.id);
+                }
+            }
+            
+            // Update camera to follow player
+            camera.x = player.x - canvas.width / 2;
+            camera.y = player.y - canvas.height / 2;
+            
+            // Keep camera within map bounds
+            camera.x = Math.max(0, Math.min(mapWidth - canvas.width, camera.x));
+            camera.y = Math.max(0, Math.min(mapHeight - canvas.height, camera.y));
+            
+            // Get other players (throttled to improve performance)
+            if (timestamp - lastPlayerFetch > 500) { // Update every 500ms
+                lastPlayerFetch = timestamp;
+                try {
+                    const { data: players, error } = await supabase
+                        .from("players")
+                        .select("*")
+                        .eq("room_id", currentRoom);
+                        
+                    if (!error && players) {
+                        otherPlayers = players.filter(p => p.id !== player.id);
+                        playerCount.textContent = players.length;
+                        
+                        // Update players list
+                        playersContent.innerHTML = players
+                            .map(p => `<div class="player-item" style="color: ${p.color}">${p.name}${p.id === player.id ? ' (You)' : ''}</div>`)
+                            .join('');
+                    }
+                } catch (error) {
+                    console.error("Error fetching players:", error);
+                }
+            }
+            
+            // Render game
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ---------- Rendering ----------
+        function render() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw map
+            drawMap();
+            
+            // Draw all players
+            drawPlayers();
+        }
+
+        function drawMap() {
+            if (!worldMap || worldMap.length === 0) return;
+            
+            const startX = Math.floor(camera.x / tileSize);
+            const startY = Math.floor(camera.y / tileSize);
+            const endX = Math.min(startX + Math.ceil(canvas.width / tileSize) + 1, worldMap[0].length);
+            const endY = Math.min(startY + Math.ceil(canvas.height / tileSize) + 1, worldMap.length);
+            
+            for (let y = Math.max(0, startY); y < endY; y++) {
+                for (let x = Math.max(0, startX); x < endX; x++) {
+                    if (!worldMap[y] || !worldMap[y][x]) continue;
+                    
+                    const tileType = worldMap[y][x];
+                    const screenX = x * tileSize - camera.x;
+                    const screenY = y * tileSize - camera.y;
+                    
+                    // Draw base tile
+                    ctx.fillStyle = textures[tileType] || textures.grass;
+                    ctx.fillRect(screenX, screenY, tileSize, tileSize);
+                    
+                    // Add texture patterns
+                    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+                    if (tileType === 'grass') {
+                        // Grass pattern
+                        for (let i = 0; i < 3; i++) {
+                            const px = screenX + Math.random() * tileSize;
+                            const py = screenY + Math.random() * tileSize;
+                            ctx.fillRect(px, py, 2, 4);
+                        }
+                    } else if (tileType === 'stone') {
+                        // Stone pattern
+                        ctx.fillRect(screenX + 10, screenY + 10, 20, 20);
+                        ctx.fillRect(screenX + 35, screenY + 25, 15, 15);
+                    } else if (tileType === 'water') {
+                        // Water animation
+                        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                        const wave = Math.sin(Date.now() * 0.005 + x + y) * 3;
+                        ctx.fillRect(screenX, screenY + wave, tileSize, 3);
+                    }
+                    
+                    // Tile border
+                    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(screenX, screenY, tileSize, tileSize);
+                }
+            }
+        }
+
+        function drawPlayers() {
+            // Draw other players first
+            otherPlayers.forEach(p => {
+                drawPlayer(p, false);
+            });
+            
+            // Draw current player on top
+            drawPlayer(player, true);
+        }
+
+        function drawPlayer(p, isCurrentPlayer) {
+            const screenX = p.x - camera.x;
+            const screenY = p.y - camera.y;
+            const size = 32;
+            
+            // Skip if player is off screen
+            if (screenX < -size || screenX > canvas.width || screenY < -size || screenY > canvas.height) {
+                return;
+            }
+            
+            // Player shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(screenX - 2, screenY + size - 2, size + 4, 6);
+            
+            // Player body
+            ctx.fillStyle = p.color || '#ff6b6b';
+            ctx.fillRect(screenX, screenY, size, size);
+            
+            // Player face
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(screenX + 8, screenY + 8, 16, 16);
+            
+            // Player eyes
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(screenX + 10, screenY + 12, 4, 4);
+            ctx.fillRect(screenX + 18, screenY + 12, 4, 4);
+            
+            // Player outline
+            ctx.strokeStyle = isCurrentPlayer ? '#FFD700' : '#000000';
+            ctx.lineWidth = isCurrentPlayer ? 3 : 2;
+            ctx.strokeRect(screenX, screenY, size, size);
+            
+            // Player name
+            ctx.fillStyle = isCurrentPlayer ? '#FFD700' : '#000000';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(p.name, screenX + size/2, screenY - 5);
+            
+            // Reset text align
+            ctx.textAlign = 'left';
+        }
+
+        // ---------- Initialize Connection ----------
+        statusBar.textContent = "Connected! Enter your name and create or join a world.";
+    </script>
 </body>
 </html>
