@@ -1,531 +1,214 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Boat (Supabase)</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Cherry Blossom World 🌸</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
-    :root{
-      --bg1:#1e3a8a; --bg2:#0f766e; --accent1:#ff6b6b; --accent2:#ee5a24;
-      --text:#fff;
+    :root {
+      --bg1: #ffe4ec; /* light pink */
+      --bg2: #ffd6f0; /* cherry blossom soft */
+      --accent1: #ff7aa2; 
+      --accent2: #ff5e78;
+      --text: #4a2c2a;
     }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial; background:linear-gradient(135deg,var(--bg1),var(--bg2)); color:var(--text); overflow:hidden}
+    * { box-sizing: border-box }
+    body {
+      margin:0; 
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      color: var(--text);
+      overflow:hidden;
+    }
     .center{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:18px}
-    .card{width:min(1100px,96vw);background:rgba(255,255,255,0.04);padding:16px;border-radius:12px}
-    h1{margin:0 0 8px;font-size:34px}
-    .row{display:flex;gap:12px}
-    input,select,button{font-size:15px;padding:10px;border-radius:10px;border:0;outline:none}
-    .btn{background:linear-gradient(45deg,var(--accent1),var(--accent2));border:none;color:white;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:800}
-    .btn-ghost{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);padding:10px;border-radius:10px;color:var(--text)}
-    .small{font-size:13px;opacity:.9}
+    .card{
+      width:min(1000px,96vw);
+      background:rgba(255,255,255,0.8);
+      padding:16px;
+      border-radius:12px;
+      box-shadow:0 8px 20px rgba(0,0,0,.15);
+    }
+    h1{margin:0 0 8px;font-size:34px;color:var(--accent2)}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    input,button{font-size:15px;padding:10px;border-radius:10px;border:0;outline:none}
+    .btn{background:linear-gradient(45deg,var(--accent1),var(--accent2));color:white;cursor:pointer;font-weight:800}
+    .btn-ghost{background:rgba(255,255,255,0.7);border:1px solid rgba(0,0,0,.1);cursor:pointer}
     .rooms{margin-top:12px;display:flex;flex-direction:column;gap:8px;max-height:220px;overflow:auto}
-    .room{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:10px;background:rgba(255,255,255,0.02)}
+    .room{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:10px;background:rgba(255,255,255,0.5)}
     .game{display:none;position:fixed;inset:0}
     #gameCanvas{display:block;width:100%;height:100%;background:#87CEEB}
-    .ui{position:absolute;left:14px;top:14px;z-index:5;text-shadow:2px 2px 4px rgba(0,0,0,.6)}
-    .controls{position:absolute;left:14px;bottom:14px;z-index:5;text-shadow:2px 2px 4px rgba(0,0,0,.6)}
+    .ui{position:absolute;left:14px;top:14px;z-index:5;text-shadow:1px 1px 3px rgba(255,255,255,.7)}
+    .controls{position:absolute;left:14px;bottom:14px;z-index:5;text-shadow:1px 1px 3px rgba(255,255,255,.7)}
     .top-right{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:5}
-    .pill{background:rgba(0,0,0,0.28);padding:6px 10px;border-radius:999px}
+    .pill{background:rgba(255,255,255,0.6);padding:6px 10px;border-radius:999px}
+    #statusBar{margin-top:8px;font-size:13px;color:#555}
   </style>
 </head>
 <body>
-  <div class="center" id="lobbyScreen">
-    <div class="card">
-      <div style="display:flex;gap:16px;align-items:flex-start">
-        <div style="flex:1">
-          <h1>Boat (Supabase)</h1>
-          <div class="small">Create a room or join by code. Players sync in realtime via Supabase Realtime.</div>
-
-          <div style="margin-top:12px">
-            <label class="small">Display name</label>
-            <input id="displayName" placeholder="CaptainBlue (optional)" maxlength="16" />
-          </div>
-
-          <div style="margin-top:12px">
-            <h3 style="margin:6px 0">Create room</h3>
-            <div style="display:flex;gap:8px">
-              <input id="createRoomName" placeholder="Room title (optional)" />
-              <select id="createMax"><option>8</option><option>12</option><option selected>32</option><option>50</option></select>
-              <button class="btn" id="createBtn">Create</button>
-            </div>
-            <div class="small" style="margin-top:6px">Room map is generated and saved to the server.</div>
-          </div>
-        </div>
-
-        <div style="width:360px">
-          <h3 style="margin:6px 0">Join room</h3>
-          <div style="display:flex;gap:8px">
-            <input id="joinInput" placeholder="Enter room ID (e.g., uuid)" />
-            <button class="btn-ghost" id="joinBtn">Join</button>
-          </div>
-
-          <div style="margin-top:12px">
-            <h3 style="margin:6px 0">Public rooms</h3>
-            <div class="rooms" id="roomsList">
-              <div class="small">Loading public rooms…</div>
-            </div>
-            <div style="margin-top:8px;display:flex;gap:8px">
-              <button class="btn-ghost" id="refreshRooms">Refresh</button>
-            </div>
-          </div>
-
-        </div>
-      </div>
+<div id="menu" class="center">
+  <div class="card">
+    <h1>🌸 Cherry Blossom World</h1>
+    <div class="row">
+      <input id="playerName" placeholder="Your Name"/>
+      <button class="btn" id="createBtn">Create Room</button>
     </div>
+    <div id="statusBar">Connecting...</div>
+    <div class="rooms" id="roomsList"></div>
   </div>
+</div>
 
-  <div class="game" id="gameScreen">
-    <canvas id="gameCanvas"></canvas>
-    <div class="ui">
-      <div>Map: <span id="mapName">—</span></div>
-      <div>Room: <span id="roomLabel">—</span></div>
-      <div>Players: <span id="playerCount">1</span>/<span id="maxPlayers">50</span></div>
-      <div class="pill" id="youTag">You: —</div>
-    </div>
-    <div class="top-right">
-      <button class="btn-ghost" id="copyLink">Copy invite</button>
-      <button class="btn-ghost" id="leaveBtn">Leave</button>
-    </div>
-    <div class="controls">WASD / Arrow keys to move</div>
-  </div>
+<div id="game" class="game">
+  <canvas id="gameCanvas"></canvas>
+  <div class="ui"><h2 id="roomInfo"></h2></div>
+  <div class="controls"><p>WASD / Arrow Keys to move 🌸</p></div>
+  <div class="top-right"><button id="leaveBtn" class="btn-ghost">Leave</button></div>
+</div>
 
-  <script type="module">
-    // ---------- SUPABASE CONFIG: FILL THESE ----------
-    const SUPABASE_URL = "https://chumxrvwpxmxttbbvemp.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNodW14cnZ3cHhteHR0YmJ2ZW1wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4OTIxMjcsImV4cCI6MjA3MTQ2ODEyN30.__GvVFs6SwJVKLUuz6Y7aA8R5wxDWlBeA8qhKpQrCbc";
+<script>
+  // ---------- Supabase Config ----------
+  const SUPABASE_URL = "YOUR_SUPABASE_URL";
+  const SUPABASE_ANON_KEY = "YOUR_SUPABASE_KEY";
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ---------- INIT ----------
-    const { createClient } = supabase;
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let currentRoom = null;
+  let player = {id:null, name:"", x:100, y:100};
 
-    // ---------- DOM ----------
-    const lobbyScreen = document.getElementById('lobbyScreen');
-    const gameScreen = document.getElementById('gameScreen');
-    const displayNameInput = document.getElementById('displayName');
-    const createRoomNameInput = document.getElementById('createRoomName');
-    const createMaxInput = document.getElementById('createMax');
-    const createBtn = document.getElementById('createBtn');
-    const joinInput = document.getElementById('joinInput');
-    const joinBtn = document.getElementById('joinBtn');
-    const roomsList = document.getElementById('roomsList');
-    const refreshRoomsBtn = document.getElementById('refreshRooms');
+  // ---------- UI ----------
+  const menu = document.getElementById("menu");
+  const gameDiv = document.getElementById("game");
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+  const statusBar = document.getElementById("statusBar");
+  const roomsList = document.getElementById("roomsList");
+  const roomInfo = document.getElementById("roomInfo");
 
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const mapNameEl = document.getElementById('mapName');
-    const roomLabelEl = document.getElementById('roomLabel');
-    const playerCountEl = document.getElementById('playerCount');
-    const maxPlayersEl = document.getElementById('maxPlayers');
-    const youTagEl = document.getElementById('youTag');
-    const copyLinkBtn = document.getElementById('copyLink');
-    const leaveBtn = document.getElementById('leaveBtn');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 
-    // ---------- STATE ----------
-    let localTag = 'p' + Math.floor(Math.random()*99999); // client short id
-    let localName = null;
-    let roomId = null;
-    let roomMax = 32;
-    let playerRowId = null; // players.id (uuid) row for our player
-    let mapData = null;
+  // ---------- Create Room ----------
+  document.getElementById("createBtn").onclick = async () => {
+    const name = document.getElementById("playerName").value.trim() || "Anon";
+    player.name = name;
 
-    let player = { x:400, y:300, w:40, h:28, speed:4, color:'#ff6b6b' };
-    const others = new Map(); // playerRowId -> {x,y,color,name}
-    const keys = {};
+    const map = generateMap(20,20);
+    const { data, error } = await supabase.from("rooms").insert([{map}]).select().single();
+    if(error){statusBar.textContent="Error: "+error.message;return;}
+    joinRoom(data.id);
+  };
 
-    // ---------- TEXTURES & MAP ----------
-    const textures = {
-      water:'#4a90e2', shallow:'#6fb6e6', sand:'#f4e4bc', grass:'#4a7c59',
-      stone:'#8b8680', snow:'#ffffff', dirt:'#8b4513', wood:'#deb887',
-      coral:'#ff7f50', rockDark:'#5b5b5b', seaweed:'#006400', reeds:'#2e8b57'
-    };
+  // ---------- Join Room ----------
+  async function joinRoom(roomId){
+    currentRoom = roomId;
+    const {data,error} = await supabase.from("players").insert([{room_id:roomId,name:player.name,x:100,y:100}]).select().single();
+    if(error){statusBar.textContent="Join error: "+error.message;return;}
+    player.id = data.id;
+    startGame();
+  }
 
-    const mapTypes = [
-      {name:'Open Sea', primary:'water', secondary:'shallow'},
-      {name:'Tropical Isles', primary:'water', secondary:'sand'},
-      {name:'Reef Coast', primary:'water', secondary:'coral'},
-      {name:'Frozen Bay', primary:'water', secondary:'snow'}
-    ];
+  // ---------- Leave ----------
+  document.getElementById("leaveBtn").onclick = async ()=>{
+    await supabase.from("players").delete().eq("id",player.id);
+    location.reload();
+  }
 
-    const MAP_W = 2400, MAP_H = 1600;
+  // ---------- Poll Rooms ----------
+  async function loadRooms(){
+    const {data,error} = await supabase.from("rooms").select("*").limit(5);
+    roomsList.innerHTML="";
+    if(data){
+      data.forEach(r=>{
+        const div=document.createElement("div");
+        div.className="room";
+        div.innerHTML=`<span>Room ${r.id}</span><button class="btn-ghost">Join</button>`;
+        div.querySelector("button").onclick=()=>joinRoom(r.id);
+        roomsList.appendChild(div);
+      });
+    }
+  }
+  setInterval(loadRooms,2000);
+  loadRooms();
 
-    function generateMapJson(){
-      const t = mapTypes[Math.floor(Math.random()*mapTypes.length)];
-      const tileSize = 64;
-      const tilesX = Math.ceil(MAP_W / tileSize), tilesY = Math.ceil(MAP_H / tileSize);
-      const tiles = [];
-      for(let y=0;y<tilesY;y++){
-        tiles[y] = [];
-        for(let x=0;x<tilesX;x++){
-          const noise = Math.sin(x*0.07)*Math.cos(y*0.07) + Math.sin(x*0.03)*Math.cos(y*0.03)*0.6;
-          let tile = (noise > 0.15) ? t.secondary : t.primary;
-          if(Math.random() < 0.07){
-            const keys = Object.keys(textures);
-            tile = keys[(x*3 + y*7 + keys.length) % keys.length];
-          }
-          tiles[y][x] = tile;
-        }
+  // ---------- Map ----------
+  let worldMap=[];
+  function generateMap(w,h){
+    let m=[];
+    for(let y=0;y<h;y++){
+      let row=[];
+      for(let x=0;x<w;x++){
+        let r=Math.random();
+        if(r<0.1) row.push("water");
+        else if(r<0.2) row.push("sand");
+        else if(r<0.7) row.push("grass");
+        else row.push("stone");
       }
-      return { name: t.name, tiles, tileSize };
+      m.push(row);
+    }
+    return m;
+  }
+
+  // ---------- Game Loop ----------
+  let keys={};
+  window.onkeydown=e=>keys[e.key]=true;
+  window.onkeyup=e=>keys[e.key]=false;
+
+  async function gameLoop(){
+    // Movement
+    if(keys["ArrowUp"]||keys["w"]) player.y-=2;
+    if(keys["ArrowDown"]||keys["s"]) player.y+=2;
+    if(keys["ArrowLeft"]||keys["a"]) player.x-=2;
+    if(keys["ArrowRight"]||keys["d"]) player.x+=2;
+
+    // Update player
+    if(player.id){
+      await supabase.from("players").update({x:player.x,y:player.y}).eq("id",player.id);
     }
 
-    // ---------- RENDER ----------
-    function drawBoat(sx, sy, color, name, isYou=false){
-      // shadow
-      ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(sx-4, sy+24, 44, 8);
-      // hull
-      ctx.fillStyle=color; ctx.fillRect(sx, sy, 40, 24);
-      // bow
-      ctx.beginPath(); ctx.moveTo(sx+40, sy+6); ctx.lineTo(sx+54, sy+12); ctx.lineTo(sx+40, sy+18); ctx.closePath(); ctx.fill();
-      // mast
-      ctx.fillStyle='#2b2b2b'; ctx.fillRect(sx+18, sy-18, 4, 18);
-      // sail
-      ctx.fillStyle='rgba(255,255,255,0.95)'; ctx.beginPath(); ctx.moveTo(sx+22, sy-18); ctx.lineTo(sx+44, sy-6); ctx.lineTo(sx+22, sy-6); ctx.closePath(); ctx.fill();
-      // outline
-      ctx.strokeStyle='rgba(0,0,0,0.9)'; ctx.lineWidth=2; ctx.strokeRect(sx, sy, 40, 24);
-      // name
-      ctx.font='12px Arial'; ctx.fillStyle=isYou ? '#fff' : 'rgba(255,255,255,0.95)';
-      ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=3; if(name) { ctx.strokeText(name, sx-6, sy-24); ctx.fillText(name, sx-6, sy-24); }
+    // Fetch players
+    const {data:players}=await supabase.from("players").select("*").eq("room_id",currentRoom);
+
+    // Draw
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawMap();
+    if(players){
+      players.forEach(p=>{
+        ctx.fillStyle=p.id===player.id?"red":"blue";
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,10,0,Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle="#000";
+        ctx.fillText(p.name,p.x-10,p.y-15);
+      });
     }
+    requestAnimationFrame(gameLoop);
+  }
 
-    function render(){
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-
-      if(mapData && mapData.tiles){
-        const ts = mapData.tileSize || 64;
-        const startX = Math.max(0, Math.floor(camera.x / ts));
-        const startY = Math.max(0, Math.floor(camera.y / ts));
-        const endX = Math.min(mapData.tiles[0].length, startX + Math.ceil(canvas.width/ts) + 2);
-        const endY = Math.min(mapData.tiles.length, startY + Math.ceil(canvas.height/ts) + 2);
-
-        for(let y=startY; y<endY; y++){
-          for(let x=startX; x<endX; x++){
-            const tile = mapData.tiles[y][x] || 'water';
-            const sx = x*ts - camera.x, sy = y*ts - camera.y;
-            ctx.fillStyle = textures[tile] || '#000';
-            ctx.fillRect(sx, sy, ts, ts);
-
-            // small decoration
-            if(tile === 'coral'){
-              ctx.fillStyle='rgba(255,127,80,0.8)'; ctx.fillRect(sx+8, sy+8, 12, 12);
-            } else if(tile === 'reeds'){
-              ctx.fillStyle='rgba(0,0,0,0.08)'; for(let i=0;i<3;i++) ctx.fillRect(sx+6+i*8, sy+18, 2, 10);
-            } else if(tile === 'shallow'){
-              ctx.fillStyle='rgba(255,255,255,0.14)'; ctx.fillRect(sx, sy+Math.sin(Date.now()*0.01 + x + y)*3, ts, 2);
-            }
-
-            ctx.strokeStyle='rgba(0,0,0,0.06)';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(sx, sy, ts, ts);
-          }
-        }
-      }
-
-      // draw others
-      others.forEach(o => drawBoat(o.x - camera.x, o.y - camera.y, o.color, o.name));
-      // draw self
-      drawBoat(player.x - camera.x, player.y - camera.y, player.color, localName || 'You', true);
-    }
-
-    // ---------- CAMERA & INPUT ----------
-    const camera = { x:0, y:0 };
-    function handleInput(){
-      let dx=0, dy=0;
-      if(keys['ArrowLeft']||keys['KeyA']) dx -= player.speed;
-      if(keys['ArrowRight']||keys['KeyD']) dx += player.speed;
-      if(keys['ArrowUp']||keys['KeyW']) dy -= player.speed;
-      if(keys['ArrowDown']||keys['KeyS']) dy += player.speed;
-      if(dx && dy){ dx *= 0.707; dy *= 0.707; }
-      player.x = Math.max(10, Math.min(MAP_W - 10, player.x + dx));
-      player.y = Math.max(10, Math.min(MAP_H - 10, player.y + dy));
-      camera.x = Math.max(0, Math.min(MAP_W - canvas.width, player.x - canvas.width/2));
-      camera.y = Math.max(0, Math.min(MAP_H - canvas.height, player.y - canvas.height/2));
-    }
-
-    function gameLoop(){
-      if(!gameRunning) return;
-      handleInput();
-      render();
-      requestAnimationFrame(gameLoop);
-    }
-
-    // ---------- Supabase helpers (DB operations & realtime) ----------
-    async function createRoomOnServer(title, maxPlayers, mapJson){
-      const { data, error } = await supabaseClient
-        .from('rooms')
-        .insert([{ title, host: localTag, max_players: maxPlayers, map: mapJson }])
-        .select()
-        .single();
-      if(error) throw error;
-      return data.id;
-    }
-
-    async function insertPlayerOnServer(room_id){
-      const payload = {
-        room_id,
-        player_tag: localTag,
-        name: localName,
-        x: Math.round(player.x),
-        y: Math.round(player.y),
-        color: player.color
-      };
-      const { data, error } = await supabaseClient
-        .from('players')
-        .insert([payload])
-        .select()
-        .single();
-      if(error) throw error;
-      return data.id; // player's row id
-    }
-
-    async function upsertPositionToServer(playerRowId, room_id){
-      if(!playerRowId) return;
-      await supabaseClient
-        .from('players')
-        .update({ x: Math.round(player.x), y: Math.round(player.y) })
-        .eq('id', playerRowId);
-    }
-
-    async function removePlayerFromServer(playerRowId){
-      if(!playerRowId) return;
-      await supabaseClient.from('players').delete().eq('id', playerRowId);
-    }
-
-    // ---------- Real-time subscriptions ----------
-    let playersSubscription = null;
-
-    function subscribePlayers(room_id){
-      // detach old
-      if(playersSubscription) supabaseClient.removeChannel(playersSubscription);
-
-      // Using Realtime via Channels (supabase-js v2)
-      const channel = supabaseClient.channel(`room_players_${room_id}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${room_id}` }, payload => {
-          const { eventType, new: newRow, old: oldRow } = payload;
-          if(eventType === 'INSERT'){
-            if(newRow.player_tag === localTag) return; // our own row handled separately
-            others.set(newRow.id, { x:newRow.x, y:newRow.y, color:newRow.color || '#999', name:newRow.name || 'Sailor' });
-          } else if(eventType === 'UPDATE'){
-            if(!newRow) return;
-            if(newRow.player_tag === localTag) return;
-            const o = others.get(newRow.id) || {};
-            others.set(newRow.id, { ...o, x:newRow.x, y:newRow.y, color:newRow.color || o.color, name:newRow.name || o.name });
-          } else if(eventType === 'DELETE'){
-            if(!oldRow) return;
-            others.delete(oldRow.id);
-          }
-        })
-        .subscribe();
-
-      playersSubscription = channel;
-    }
-
-    // ---------- UI actions: create / join / leave ----------
-    createBtn.onclick = async () => {
-      localName = (displayNameInput.value || genRandomName()).slice(0,16);
-      try{
-        const title = (createRoomNameInput.value || 'Harbor Room').slice(0,40);
-        const maxPlayers = parseInt(createMaxInput.value || '32', 10) || 32;
-        const mapJson = generateMapJson();
-
-        // create room
-        const roomIdCreated = await createRoomOnServer(title, maxPlayers, mapJson);
-        roomId = roomIdCreated;
-        roomMax = maxPlayers;
-        // join
-        playerRowId = await insertPlayerOnServer(roomId);
-        // subscribe realtime
-        subscribePlayers(roomId);
-
-        // UI
-        mapData = mapJson;
-        startGameUI(roomId, title, roomMax);
-        // start position updates
-        startPositionBroadcast();
-      }catch(err){ console.error(err); alert('Failed to create room: ' + (err.message || err)); }
-    };
-
-    joinBtn.onclick = async () => {
-      const code = (joinInput.value || '').trim();
-      if(!code){ alert('Enter room id'); return; }
-      localName = (displayNameInput.value || genRandomName()).slice(0,16);
-      try{
-        // fetch room
-        const { data: roomData, error } = await supabaseClient.from('rooms').select('*').eq('id', code).single();
-        if(error || !roomData){ alert('Room not found'); return; }
-        if(roomData.max_players){
-          // count players in room
-          const { count } = await supabaseClient.from('players').select('*', { count: 'exact', head: true }).eq('room_id', code);
-          if(count >= roomData.max_players){ alert('Room full'); return; }
-        }
-        // join
-        roomId = code;
-        roomMax = roomData.max_players || 32;
-        mapData = roomData.map;
-        playerRowId = await insertPlayerOnServer(roomId);
-        subscribePlayers(roomId);
-        startGameUI(roomId, roomData.title || 'Room', roomMax);
-        startPositionBroadcast();
-      }catch(err){ console.error(err); alert('Failed to join room: ' + (err.message || err)); }
-    };
-
-    leaveBtn.onclick = async () => {
-      // remove player record
-      await removePlayerFromServer(playerRowId).catch(()=>{});
-      // unsubscribe
-      if(playersSubscription) supabaseClient.removeChannel(playersSubscription);
-      playersSubscription = null;
-      playerRowId = null;
-      roomId = null;
-      others.clear();
-      stopGameUI();
-    };
-
-    // ---------- Position broadcast (10Hz) ----------
-    let posInterval = null;
-    function startPositionBroadcast(){
-      if(posInterval) clearInterval(posInterval);
-      posInterval = setInterval(()=> {
-        upsertPositionToServer(playerRowId, roomId).catch(()=>{});
-      }, 100);
-    }
-
-    // ---------- Start/stop game UI ----------
-    let gameRunning = false;
-    function startGameUI(id, title, maxp){
-      lobbyScreen.style.display = 'none';
-      gameScreen.style.display = 'block';
-      canvas.width = innerWidth; canvas.height = innerHeight;
-      roomLabelEl.textContent = id;
-      mapNameEl.textContent = (mapData && mapData.name) || 'Map';
-      playerCountEl.textContent = (others.size + 1).toString();
-      maxPlayersEl.textContent = maxp;
-      youTagEl.textContent = `You: ${localName}`;
-      // choose color
-      player.color = uidColor(localTag);
-      // center player on map
-      player.x = Math.round(MAP_W/2 + (Math.random()-0.5)*200);
-      player.y = Math.round(MAP_H/2 + (Math.random()-0.5)*200);
-      // update our row with starting pos
-      (async ()=>{ if(playerRowId) await upsertPositionToServer(playerRowId, roomId); })();
-      gameRunning = true; gameLoop();
-    }
-    function stopGameUI(){
-      gameRunning = false;
-      gameScreen.style.display = 'none';
-      lobbyScreen.style.display = 'flex';
-    }
-
-    // ---------- Utility functions ----------
-    function genRandomName(){
-      const a=['Swift','Brave','Merry','Salty','Silent','Lucky','Sunny','Stormy','Cosmic','Neon'];
-      const b=['Sailor','Captain','Skipper','Mariner','Voyager','Wave','Gull','Anchor','Harbor','Compass'];
-      return a[Math.floor(Math.random()*a.length)] + b[Math.floor(Math.random()*b.length)];
-    }
-    function uidColor(tag){
-      let h=0; for(const c of (tag||'x')) h=(h*31 + c.charCodeAt(0))%360;
-      return `hsl(${h} 70% 56%)`;
-    }
-
-    // ---------- list public rooms (recent) ----------
-    async function listRooms(){
-      roomsList.innerHTML = '<div class="small">Loading…</div>';
-      try {
-        // Fetch last 50 rooms
-        const { data, error } = await supabaseClient
-          .from('rooms')
-          .select('id,title,created_at')
-          .order('created_at', { ascending: false })
-          .limit(50);
-        if(error) throw error;
-        roomsList.innerHTML = '';
-        data.forEach(r=>{
-          const div = document.createElement('div'); div.className='room';
-          div.innerHTML = `<div><div style="font-weight:800">${r.title||'Room'}</div><div class="small">${r.id}</div></div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <button class="btn-ghost small">Join</button>
-            </div>`;
-          div.querySelector('button').onclick = async ()=> {
-            joinInput.value = r.id;
-            joinBtn.click();
-          };
-          roomsList.appendChild(div);
-        });
-        if(!data.length) roomsList.innerHTML = '<div class="small">No public rooms — create one.</div>';
-      } catch(err){
-        console.error(err); roomsList.innerHTML = '<div class="small">Failed to load rooms.</div>';
+  function drawMap(){
+    if(!worldMap.length) return;
+    const tile=32;
+    for(let y=0;y<worldMap.length;y++){
+      for(let x=0;x<worldMap[y].length;x++){
+        const type=worldMap[y][x];
+        if(type==="grass") ctx.fillStyle="#77dd77";
+        else if(type==="water") ctx.fillStyle="#4da6ff";
+        else if(type==="sand") ctx.fillStyle="#fff5ba";
+        else ctx.fillStyle="#bbb";
+        ctx.fillRect(x*tile,y*tile,tile,tile);
       }
     }
+  }
 
-    // ---------- keyboard & resize ----------
-    window.addEventListener('keydown', e=>{ keys[e.code]=true; if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault(); });
-    window.addEventListener('keyup', e=>{ keys[e.code]=false; });
-    window.addEventListener('resize', ()=>{ canvas.width = innerWidth; canvas.height = innerHeight; });
+  // ---------- Start ----------
+  async function startGame(){
+    menu.style.display="none";
+    gameDiv.style.display="block";
+    roomInfo.textContent="Room "+currentRoom;
 
-    // ---------- autoplace from URL ?room= ----------
-    (async function init(){
-      canvas.width = innerWidth; canvas.height = innerHeight;
-      displayNameInput.placeholder = genRandomName();
+    const {data}=await supabase.from("rooms").select("map").eq("id",currentRoom).single();
+    worldMap=data.map;
 
-      // show rooms
-      listRooms();
-
-      // if ?room=... then attempt auto-join when user clicks Join (we don't auto-insert until join)
-      const params = new URLSearchParams(location.search);
-      const q = params.get('room');
-      if(q){ joinInput.value = q; }
-
-      // if user presses Enter in join input, trigger join
-      joinInput.addEventListener('keyup', (e)=> { if(e.key === 'Enter') joinBtn.click(); });
-    })();
-
-    // ---------- render loop & count update ----------
-    let lastCountUpdate = 0;
-    function updatePlayerCount(){
-      // attempt to fetch count quickly every 1s
-      if(!roomId) return;
-      const now = Date.now();
-      if(now - lastCountUpdate < 1000) return;
-      lastCountUpdate = now;
-      supabaseClient.from('players').select('id', { count: 'exact', head: true }).eq('room_id', roomId).then(res=>{
-        if(res && res.count !== undefined) playerCountEl.textContent = String(res.count);
-      }).catch(()=>{});
-    }
-
-    function renderLoop(){
-      if(!gameRunning) return;
-      render();
-      updatePlayerCount();
-      requestAnimationFrame(renderLoop);
-    }
-
-    // call gameLoop for core loop
-    function gameLoop(){
-      if(!gameRunning) return;
-      handleInput();
-      render();
-      requestAnimationFrame(gameLoop);
-    }
-
-    // ---------- export copy link ----------
-    copyLinkBtn.onclick = async () => {
-      if(!roomId) return;
-      const url = `${location.origin}${location.pathname}?room=${encodeURIComponent(roomId)}`;
-      try{ await navigator.clipboard.writeText(url); copyLinkBtn.textContent='Copied!'; setTimeout(()=>copyLinkBtn.textContent='Copy invite', 1000); }catch{}
-    };
-
-    // ---------- finalize: update our DB row when we move (10Hz) ----------
-    setInterval(()=> {
-      if(playerRowId && roomId) upsertPositionToServer(playerRowId, roomId).catch(()=>{});
-    }, 100);
-
-    // ---------- clean up when closing tab ----------
-    window.addEventListener('beforeunload', async ()=> {
-      if(playerRowId) {
-        try{ await removePlayerFromServer(playerRowId); }catch{}
-      }
-    });
-  </script>
+    requestAnimationFrame(gameLoop);
+  }
+</script>
 </body>
 </html>
