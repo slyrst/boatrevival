@@ -1,504 +1,513 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Boat</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Boat — Online</title>
   <style>
     :root{
-      --bg1:#4e73df; --bg2:#1cc88a; --text:#fff; --shadow:rgba(0,0,0,.35);
-      --cta1:#ff6b6b; --cta2:#ee5a24;
+      --bg1:#2b6cb0; --bg2:#2c7a7b; --cta1:#ff6b6b; --cta2:#ee5a24;
+      --text:#fff; --shadow:rgba(0,0,0,.35);
     }
     *{box-sizing:border-box}
-    body{
-      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%);
-      overflow:hidden;
-    }
-    .screen{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:24px;}
-    .hidden{display:none !important;}
-    .card{
-      width:min(1024px,96vw); max-height:92vh; overflow:auto;
-      background:rgba(255,255,255,.08); backdrop-filter:blur(6px);
-      border-radius:20px; box-shadow:0 20px 50px var(--shadow); padding:20px;
-      color:var(--text);
-    }
-    .title{font-size:40px; font-weight:800; margin:4px 0 12px; text-shadow:3px 3px 8px var(--shadow);}
-    .row{display:flex; gap:16px; flex-wrap:wrap;}
-    .col{flex:1 1 320px; min-width:280px;}
-    .section{background:rgba(0,0,0,.25); border-radius:16px; padding:14px;}
-    label{display:block; font-size:14px; opacity:.95; margin:6px 0 6px 2px;}
-    input, select{
-      width:100%; border:none; border-radius:12px; padding:12px 14px; font-size:16px;
-      background:rgba(255,255,255,.96); color:#1a1a1a; outline:none;
-    }
-    .btn{
-      display:inline-flex; align-items:center; justify-content:center; gap:8px;
-      background:linear-gradient(45deg,var(--cta1),var(--cta2)); color:#fff; border:none;
-      padding:14px 18px; border-radius:14px; font-weight:800; cursor:pointer;
-      box-shadow:0 10px 26px var(--shadow); transition:.22s transform,.22s box-shadow;
-      width:100%;
-    }
-    .btn:hover{transform:translateY(-2px); box-shadow:0 14px 30px var(--shadow);}
-    .muted{opacity:.85}
-    .pill{display:inline-block; background:rgba(0,0,0,.35); padding:.25rem .6rem; border-radius:999px; font-weight:700;}
-    .list{display:flex; flex-direction:column; gap:10px; margin-top:8px;}
-    .room-item{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      background:rgba(255,255,255,.1); border-radius:12px; padding:10px 12px;
-    }
-    .room-name{font-weight:800}
-    .room-meta{font-size:13px; opacity:.9}
-    .small{font-size:12px}
-    .row-tight{display:flex; gap:8px}
-    .btn-ghost{
-      background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.25);
-      padding:10px 12px; border-radius:10px; color:#fff; cursor:pointer;
-    }
-    /* Game */
-    .game{position:relative; width:100vw; height:100vh; overflow:hidden;}
-    #gameCanvas{display:block; background:#87CEEB;}
-    .ui{
-      position:absolute; top:14px; left:14px; color:white; font-size:16px;
-      text-shadow:2px 2px 4px rgba(0,0,0,.7); z-index:10; line-height:1.35;
-    }
-    .controls{
-      position:absolute; bottom:16px; left:16px; color:white; font-size:14px;
-      text-shadow:2px 2px 4px rgba(0,0,0,.7); z-index:10;
-    }
-    .top-right{position:absolute; top:14px; right:14px; display:flex; gap:8px; z-index:10;}
+    body{margin:0; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:linear-gradient(135deg,var(--bg1),var(--bg2)); color:var(--text); overflow:hidden}
+    .center{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:20px}
+    .card{width:min(1100px,96vw);background:rgba(255,255,255,0.06);padding:18px;border-radius:14px;box-shadow:0 18px 40px var(--shadow)}
+    h1{margin:0 0 8px;font-size:36px;letter-spacing:.6px}
+    .row{display:flex;gap:12px;align-items:stretch}
+    .col{flex:1;min-width:260px}
+    input,select,button{font-size:15px}
+    input,select{width:100%;padding:10px;border-radius:10px;border:0;outline:none}
+    .btn{background:linear-gradient(45deg,var(--cta1),var(--cta2));border:none;color:white;padding:12px 16px;border-radius:12px;cursor:pointer;font-weight:800;box-shadow:0 10px 26px var(--shadow)}
+    .btn-ghost{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);padding:10px;border-radius:10px;color:var(--text);cursor:pointer}
+    .small{font-size:13px;opacity:.9}
+    .muted{opacity:.8}
+    .rooms{margin-top:12px;display:flex;flex-direction:column;gap:8px;max-height:260px;overflow:auto}
+    .room{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;background:rgba(255,255,255,0.03)}
+    .game{display:none;position:fixed;inset:0}
+    #gameCanvas{display:block;background:#87CEEB;width:100%;height:100%}
+    .ui{position:absolute;left:14px;top:14px;z-index:5;text-shadow:2px 2px 4px rgba(0,0,0,.6)}
+    .controls{position:absolute;left:14px;bottom:14px;z-index:5;text-shadow:2px 2px 4px rgba(0,0,0,.6)}
+    .top-right{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:5}
+    .pill{background:rgba(0,0,0,0.28);padding:6px 10px;border-radius:999px}
   </style>
 </head>
 <body>
-
-  <!-- ======== HOME / LOBBY ======== -->
-  <div class="screen" id="homeScreen">
+  <!-- LOBBY -->
+  <div class="center" id="lobbyScreen">
     <div class="card">
-      <div class="row">
-        <div class="col">
-          <div class="title">Boat</div>
-          <div class="section">
-            <label>Your Name</label>
-            <input id="displayName" placeholder="e.g., CaptainBlue" maxlength="16"/>
+      <div style="display:flex;gap:18px;align-items:flex-start">
+        <div style="flex:1">
+          <h1>Boat</h1>
+          <div class="small muted">Create a room or join with a code. Your position is synced live with others in the same room.</div>
+
+          <div style="margin-top:14px">
+            <label class="small">Display name</label>
+            <input id="displayName" placeholder="CaptainBlue (optional)" maxlength="16" />
           </div>
 
-          <div class="section" style="margin-top:12px;">
-            <h3 style="margin:0 0 8px;">Create Room</h3>
-            <label>Room Name (optional)</label>
-            <input id="createRoomName" placeholder="e.g., Harbor Hangout" maxlength="24"/>
-            <div class="row-tight" style="margin-top:8px;">
-              <div style="flex:1">
-                <label>Max Players</label>
-                <select id="maxPlayers">
-                  <option>8</option><option>16</option><option selected>32</option><option>50</option>
-                </select>
-              </div>
-              <div style="flex:1">
-                <label>Visibility</label>
-                <select id="visibility">
-                  <option value="public" selected>Public (listed)</option>
-                  <option value="private">Private (invite link)</option>
-                </select>
-              </div>
+          <div style="margin-top:12px">
+            <h3 style="margin:6px 0">Create room</h3>
+            <div style="display:flex;gap:8px">
+              <input id="createRoomName" placeholder="Room title (optional)" />
+              <select id="createMax"><option>8</option><option>12</option><option selected>32</option><option>50</option></select>
+              <button class="btn" id="createBtn">Create</button>
             </div>
-            <button class="btn" id="createBtn" style="margin-top:12px;">Create Room</button>
-            <div class="small muted" style="margin-top:8px;">You’ll jump in immediately. Share the invite link so others can join.</div>
+            <div class="small muted" style="margin-top:8px">Room will be public and appear in the list so friends can join.</div>
           </div>
         </div>
 
-        <div class="col">
-          <div class="section">
-            <h3 style="margin:0 0 8px;">Join Room</h3>
-            <label>Enter Room Code</label>
-            <div class="row-tight">
-              <input id="joinCode" placeholder="e.g., boat-7x3k2" maxlength="24"/>
-              <button class="btn-ghost" id="joinCodeBtn">Join</button>
-            </div>
-            <div class="small muted" style="margin-top:6px;">You can also click a public room below.</div>
+        <div style="width:380px">
+          <h3 style="margin:6px 0">Join room</h3>
+          <div style="display:flex;gap:8px">
+            <input id="joinInput" placeholder="Enter room code (e.g., boat-abc12)" />
+            <button class="btn-ghost" id="joinBtn">Join</button>
           </div>
 
-          <div class="section" style="margin-top:12px;">
-            <div class="row-tight" style="justify-content:space-between; align-items:center;">
-              <h3 style="margin:0;">Public Rooms</h3>
-              <button class="btn-ghost small" id="refreshRooms">Refresh</button>
+          <div style="margin-top:12px">
+            <h3 style="margin:6px 0">Public rooms</h3>
+            <div class="rooms" id="roomsList">
+              <div class="small muted">Loading public rooms…</div>
             </div>
-            <div class="list" id="roomsList"></div>
-            <div class="small muted" style="margin-top:8px;">Shows active rooms updated in the last 30 minutes.</div>
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button class="btn-ghost" id="refreshRooms">Refresh</button>
+              <button class="btn-ghost" id="autoJoinFirst">Auto-join first</button>
+            </div>
           </div>
+
         </div>
       </div>
-      <div class="small muted" style="margin-top:10px;">Tip: Invite link includes the room code (e.g., <span class="pill">?room=boat-7x3k2</span>).</div>
     </div>
   </div>
 
-  <!-- ======== GAME ======== -->
-  <div class="game hidden" id="gameScreen">
+  <!-- GAME -->
+  <div class="game" id="gameScreen">
     <canvas id="gameCanvas"></canvas>
     <div class="ui">
-      <div>Map: <span id="mapName">Loading...</span></div>
-      <div>Room: <span id="roomName">—</span></div>
-      <div>Players: <span id="playerCount">1</span>/<span id="maxCount">50</span></div>
+      <div>Map: <span id="mapName">—</span></div>
+      <div>Room: <span id="roomLabel">—</span></div>
+      <div>Players: <span id="playerCount">1</span>/<span id="maxPlayersShow">50</span></div>
       <div class="pill" id="youTag">You: —</div>
     </div>
     <div class="top-right">
-      <button class="btn-ghost small" id="copyInvite">Copy Invite</button>
-      <button class="btn-ghost small" id="leaveBtn">Leave</button>
+      <button class="btn-ghost" id="copyLink">Copy invite</button>
+      <button class="btn-ghost" id="leaveBtn">Leave</button>
     </div>
-    <div class="controls">Move with WASD or Arrow Keys</div>
+    <div class="controls">Use WASD or Arrow keys to move</div>
   </div>
 
-  <!-- ======== APP / FIREBASE ======== -->
+  <!-- Firebase + Game Logic -->
   <script type="module">
-    // -------- 1) ADD YOUR FIREBASE CONFIG HERE --------
+    // ------------------ FIREBASE CONFIG (user-provided) ------------------
     const firebaseConfig = {
-  apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
-  authDomain: "boat-revival.firebaseapp.com",
-  projectId: "boat-revival",
-  storageBucket: "boat-revival.appspot.com",
-  messagingSenderId: "207519236382",
-  appId: "1:207519236382:web:3a61a1b8811fd811e0c90f"
-};
+      apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
+      authDomain: "boat-revival.firebaseapp.com",
+      projectId: "boat-revival",
+      storageBucket: "boat-revival.appspot.com",
+      messagingSenderId: "207519236382",
+      appId: "1:207519236382:web:3a61a1b8811fd811e0c90f"
+      // If you have databaseURL, you may add: databaseURL: "https://YOUR_DB.firebaseio.com"
+    };
 
-    // -------- Imports --------
+    // ------------------ IMPORTS (Firebase modular CDN) ------------------
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
     import {
       getDatabase, ref, set, update, remove, onValue, onChildAdded, onChildChanged, onChildRemoved,
-      serverTimestamp, onDisconnect, query, orderByChild, limitToLast
+      serverTimestamp, onDisconnect, push, query, orderByChild, limitToLast
     } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
+    // ------------------ INIT ------------------
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // -------- DOM --------
-    const homeScreen  = document.getElementById('homeScreen');
-    const gameScreen  = document.getElementById('gameScreen');
-    const roomsListEl = document.getElementById('roomsList');
+    // ------------------ DOM ------------------
+    const lobbyScreen = document.getElementById('lobbyScreen');
+    const gameScreen = document.getElementById('gameScreen');
     const displayNameInput = document.getElementById('displayName');
-    const createRoomName = document.getElementById('createRoomName');
-    const maxPlayersSel  = document.getElementById('maxPlayers');
-    const visibilitySel  = document.getElementById('visibility');
-    const createBtn      = document.getElementById('createBtn');
-    const joinCodeInput  = document.getElementById('joinCode');
-    const joinCodeBtn    = document.getElementById('joinCodeBtn');
-    const refreshRooms   = document.getElementById('refreshRooms');
+    const createRoomNameInput = document.getElementById('createRoomName');
+    const createMaxInput = document.getElementById('createMax');
+    const createBtn = document.getElementById('createBtn');
+    const joinInput = document.getElementById('joinInput');
+    const joinBtn = document.getElementById('joinBtn');
+    const roomsList = document.getElementById('roomsList');
+    const refreshRoomsBtn = document.getElementById('refreshRooms');
+    const autoJoinBtn = document.getElementById('autoJoinFirst');
 
     const canvas = document.getElementById('gameCanvas');
-    const ctx    = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
     const mapNameEl = document.getElementById('mapName');
-    const roomNameEl = document.getElementById('roomName');
+    const roomLabelEl = document.getElementById('roomLabel');
     const playerCountEl = document.getElementById('playerCount');
-    const maxCountEl = document.getElementById('maxCount');
+    const maxPlayersShow = document.getElementById('maxPlayersShow');
     const youTagEl = document.getElementById('youTag');
-    const copyInviteBtn = document.getElementById('copyInvite');
+    const copyLinkBtn = document.getElementById('copyLink');
     const leaveBtn = document.getElementById('leaveBtn');
 
-    // -------- State --------
+    // ------------------ STATE ------------------
     let localUid = null;
     let localName = null;
     let roomId = null;
+    let roomMax = 50;
     let hostUid = null;
-    let maxCount = 50;
 
     let gameRunning = false;
-    let camera = { x: 0, y: 0 };
-    const mapWidth = 2000, mapHeight = 1500;
-    let currentMap = null;
+    let camera = { x:0, y:0 };
+    const mapWidth = 2400, mapHeight = 1600;
 
-    const player = { x: 400, y: 300, width: 32, height: 32, speed: 5, color: '#ff6b6b' };
-    const keys = {};
+    // Player
+    const player = { x:400, y:300, w:32, h:32, speed:4, color:'#ff6b6b' };
     const others = new Map(); // uid -> {x,y,color,name}
+    const keys = {};
 
-    // Water-first maps for "Boat"
+    // ------------------ TEXTURES (expanded) ------------------
     const textures = {
-      grass:'#4a7c59', stone:'#8b8680', sand:'#f4e4bc', water:'#4a90e2',
-      lava:'#ff4757', snow:'#ffffff', dirt:'#8b4513', wood:'#deb887'
+      water:'#4a90e2', sand:'#f4e4bc', grass:'#4a7c59', stone:'#8b8680', snow:'#ffffff',
+      dirt:'#8b4513', wood:'#deb887', reeds:'#2e8b57', coral:'#ff7f50', rockDark:'#5b5b5b',
+      seaweed:'#006400', shallow:'#6fb6e6'
     };
+
     const mapTypes = [
-      { name:'Great Blue', primary:'water', secondary:'sand' },
-      { name:'Island Chain', primary:'water', secondary:'grass' },
-      { name:'Reef Coast', primary:'water', secondary:'stone' },
-      { name:'Frozen Bay', primary:'water', secondary:'snow' },
+      {name:'Open Sea', primary:'water', secondary:'shallow'},
+      {name:'Tropical Isles', primary:'water', secondary:'sand'},
+      {name:'Archipelago', primary:'water', secondary:'grass'},
+      {name:'Volcanic Atoll', primary:'water', secondary:'rockDark'},
+      {name:'Frozen Bay', primary:'water', secondary:'snow'},
+      {name:'Reef Coast', primary:'water', secondary:'coral'}
     ];
 
-    // -------- Utils --------
-    const qs = new URLSearchParams(location.search);
+    // ------------------ HELPERS ------------------
     function randomName(){
       const a=['Swift','Brave','Merry','Salty','Silent','Lucky','Sunny','Stormy','Cosmic','Neon'];
       const b=['Sailor','Captain','Skipper','Mariner','Voyager','Wave','Gull','Anchor','Harbor','Compass'];
       return a[Math.floor(Math.random()*a.length)] + b[Math.floor(Math.random()*b.length)];
     }
-    function randomColor(uid){
-      let h=0; for(const c of (uid||'xx')) h=(h*31 + c.charCodeAt(0))%360;
-      return `hsl(${h} 80% 60%)`;
+    function uidColor(uid){
+      let h=0; for(const c of (uid||'x')) h=(h*31 + c.charCodeAt(0))%360;
+      return `hsl(${h} 70% 58%)`;
     }
-    function genRoomId(){
-      return 'boat-' + Math.random().toString(36).slice(2,7); // e.g., boat-7x3k2
-    }
-    function nowMinutes(){ return Math.floor(Date.now()/60000); }
+    function genRoomCode(){ return 'boat-' + Math.random().toString(36).slice(2,8); }
+    function nowMin(){ return Math.floor(Date.now()/60000); }
 
-    // -------- Firebase Paths --------
-    const roomPath = (id, p='') => `rooms/${id}/${p}`;
-    const lobbyRoomPath = (id) => `lobby/rooms/${id}`;
-
-    // -------- Map --------
-    function generateRandomMap(){
+    // ------------------ MAP GENERATION ------------------
+    let currentMap = null;
+    function generateMap(){
       const t = mapTypes[Math.floor(Math.random()*mapTypes.length)];
       currentMap = t;
       mapNameEl.textContent = t.name;
 
+      const tileSize = 64;
+      const tilesX = Math.ceil(mapWidth/tileSize), tilesY = Math.ceil(mapHeight/tileSize);
       currentMap.tiles = [];
-      const s = 64, tilesX = Math.ceil(mapWidth/s), tilesY = Math.ceil(mapHeight/s);
       for(let y=0;y<tilesY;y++){
         currentMap.tiles[y]=[];
         for(let x=0;x<tilesX;x++){
-          const n = Math.sin(x*0.08)*Math.cos(y*0.08) + Math.sin(x*0.035)*Math.cos(y*0.035)*0.5;
-          currentMap.tiles[y][x] = (n>0.15) ? t.secondary : t.primary;
-          if(Math.random()<0.06){
-            const k = Object.keys(textures); currentMap.tiles[y][x] = k[(x*7 + y*13 + k.length)%k.length];
+          const noise = Math.sin(x*0.07)*Math.cos(y*0.07) + Math.sin(x*0.03)*Math.cos(y*0.03)*0.6;
+          let tile = (noise>0.18) ? t.secondary : t.primary;
+          if(Math.random() < 0.08){
+            const keys = Object.keys(textures);
+            tile = keys[(x*3 + y*7 + keys.length) % keys.length];
           }
+          currentMap.tiles[y][x] = tile;
         }
       }
     }
 
-    // -------- Rendering --------
+    // ------------------ RENDER ------------------
     function drawBoat(sx, sy, color, name, isYou=false){
-      ctx.fillStyle='rgba(0,0,0,.3)'; ctx.fillRect(sx-2, sy+28, 36, 6);
-      ctx.fillStyle=color; ctx.fillRect(sx, sy, 32, 32);
-      ctx.beginPath(); ctx.moveTo(sx+32, sy+8); ctx.lineTo(sx+48, sy+16); ctx.lineTo(sx+32, sy+24); ctx.closePath(); ctx.fill();
-      ctx.fillStyle='#2d2d2d'; ctx.fillRect(sx+12, sy-18, 4, 18);
-      ctx.fillStyle='rgba(255,255,255,.9)';
-      ctx.beginPath(); ctx.moveTo(sx+16, sy-18); ctx.lineTo(sx+32, sy-6); ctx.lineTo(sx+16, sy-6); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.strokeRect(sx, sy, 32, 32);
-      ctx.font='12px Arial'; ctx.fillStyle= isYou ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,.95)';
-      ctx.strokeStyle='rgba(0,0,0,.7)'; ctx.lineWidth=3; ctx.strokeText(name, sx-4, sy-22); ctx.fillText(name, sx-4, sy-22);
+      // shadow
+      ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.fillRect(sx-4, sy+28, 44, 8);
+      // hull
+      ctx.fillStyle=color; ctx.fillRect(sx, sy, 40, 28);
+      // bow
+      ctx.beginPath(); ctx.moveTo(sx+40, sy+6); ctx.lineTo(sx+56, sy+14); ctx.lineTo(sx+40, sy+22); ctx.closePath(); ctx.fill();
+      // mast
+      ctx.fillStyle='#2b2b2b'; ctx.fillRect(sx+18, sy-20, 4, 20);
+      // sail
+      ctx.fillStyle='rgba(255,255,255,0.95)'; ctx.beginPath(); ctx.moveTo(sx+22, sy-20); ctx.lineTo(sx+44, sy-6); ctx.lineTo(sx+22, sy-6); ctx.closePath(); ctx.fill();
+      // outline
+      ctx.strokeStyle='rgba(0,0,0,0.9)'; ctx.lineWidth=2; ctx.strokeRect(sx, sy, 40, 28);
+      // name
+      ctx.font='12px Arial'; ctx.fillStyle=isYou ? '#fff' : 'rgba(255,255,255,0.95)';
+      ctx.strokeStyle='rgba(0,0,0,0.6)'; ctx.lineWidth=3; ctx.strokeText(name, sx-6, sy-26); ctx.fillText(name, sx-6, sy-26);
     }
+
     function render(){
       ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      // tiles
       if(currentMap && currentMap.tiles){
-        const s=64, startX=Math.floor(camera.x/s), startY=Math.floor(camera.y/s);
-        const endX=Math.min(startX + Math.ceil(canvas.width/s) + 1, currentMap.tiles[0].length);
-        const endY=Math.min(startY + Math.ceil(canvas.height/s)+ 1, currentMap.tiles.length);
+        const ts = 64;
+        const startX = Math.floor(camera.x/ts), startY=Math.floor(camera.y/ts);
+        const endX = Math.min(startX + Math.ceil(canvas.width/ts)+2, currentMap.tiles[0].length);
+        const endY = Math.min(startY + Math.ceil(canvas.height/ts)+2, currentMap.tiles.length);
         for(let y=Math.max(0,startY); y<endY; y++){
           for(let x=Math.max(0,startX); x<endX; x++){
-            const t=currentMap.tiles[y][x], sx=x*s-camera.x, sy=y*s-camera.y;
-            ctx.fillStyle=textures[t]; ctx.fillRect(sx,sy,s,s);
-            if(t==='water'){ ctx.fillStyle='rgba(255,255,255,.25)'; const w=Math.sin(Date.now()*0.01 + x + y)*5; ctx.fillRect(sx, sy+w, s, 2); }
-            ctx.strokeStyle='rgba(0,0,0,.08)'; ctx.lineWidth=1; ctx.strokeRect(sx,sy,s,s);
+            const tile = currentMap.tiles[y][x];
+            const sx = x*ts - camera.x, sy = y*ts - camera.y;
+            ctx.fillStyle = textures[tile] || '#000';
+            ctx.fillRect(sx, sy, ts, ts);
+
+            // small decorations for certain tiles
+            if(tile==='reeds'){
+              for(let i=0;i<3;i++){ ctx.fillStyle='rgba(0,0,0,0.08)'; ctx.fillRect(sx+6+i*8, sy+20,2,12); }
+            } else if(tile==='coral'){
+              ctx.fillStyle='rgba(255,127,80,0.7)'; ctx.fillRect(sx+8, sy+8, 12, 12);
+            } else if(tile==='shallow'){
+              ctx.fillStyle='rgba(255,255,255,0.18)'; const w=Math.sin(Date.now()*0.01 + x + y)*4; ctx.fillRect(sx, sy+w, ts, 3);
+            } else if(tile==='water'){
+              ctx.fillStyle='rgba(255,255,255,0.14)'; const w=Math.sin(Date.now()*0.01 + x + y)*3; ctx.fillRect(sx+6, sy+w+10, ts-12, 2);
+            }
+
+            ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=1; ctx.strokeRect(sx,sy,ts,ts);
           }
         }
       }
-      others.forEach(p=>drawBoat(p.x - camera.x, p.y - camera.y, p.color, p.name));
+
+      // others
+      others.forEach(o => drawBoat(o.x - camera.x, o.y - camera.y, o.color, o.name));
+      // self
       drawBoat(player.x - camera.x, player.y - camera.y, player.color, localName || 'You', true);
     }
 
-    // -------- Movement --------
+    // ------------------ INPUT / CAMERA ------------------
     function handleInput(){
       let dx=0, dy=0;
-      if(keys['ArrowLeft']||keys['KeyA']) dx-=player.speed;
-      if(keys['ArrowRight']||keys['KeyD']) dx+=player.speed;
-      if(keys['ArrowUp']||keys['KeyW']) dy-=player.speed;
-      if(keys['ArrowDown']||keys['KeyS']) dy+=player.speed;
-      if(dx && dy){ dx*=0.707; dy*=0.707; }
+      if(keys['ArrowLeft']||keys['KeyA']) dx -= player.speed;
+      if(keys['ArrowRight']||keys['KeyD']) dx += player.speed;
+      if(keys['ArrowUp']||keys['KeyW']) dy -= player.speed;
+      if(keys['ArrowDown']||keys['KeyS']) dy += player.speed;
+      if(dx !== 0 && dy !== 0){ dx *= 0.707; dy *= 0.707; }
       player.x = Math.max(16, Math.min(mapWidth-16, player.x + dx));
       player.y = Math.max(16, Math.min(mapHeight-16, player.y + dy));
-      camera.x = Math.max(0, Math.min(mapWidth - canvas.width,  player.x - canvas.width/2));
+
+      camera.x = Math.max(0, Math.min(mapWidth - canvas.width, player.x - canvas.width/2));
       camera.y = Math.max(0, Math.min(mapHeight - canvas.height, player.y - canvas.height/2));
     }
+
     function gameLoop(){
       if(!gameRunning) return;
-      handleInput(); render(); requestAnimationFrame(gameLoop);
+      handleInput(); render();
+      requestAnimationFrame(gameLoop);
     }
 
-    // -------- Presence & Rooms --------
-    function playerRef(id){ return ref(db, roomPath(id, `players/${localUid}`)); }
-    function roomRef(id, p=''){ return ref(db, roomPath(id, p)); }
-    function lobbyRef(id){ return ref(db, lobbyRoomPath(id)); }
+    // ------------------ FIREBASE ROOM & PRESENCE ------------------
+    function roomPath(id, p=''){ return `rooms/${id}/${p}`; }
+    function lobbyPath(id){ return `lobby/rooms/${id}`; }
 
     async function createRoom(){
-      const id = genRoomId();
-      const name = (createRoomName.value || 'Harbor Room').slice(0,24);
-      const vis  = visibilitySel.value; // public | private
-      maxCount = parseInt(maxPlayersSel.value, 10);
-      const roomData = {
-        name, public: vis==='public', maxPlayers: maxCount,
-        hostUid: localUid, createdAt: serverTimestamp(), updatedAt: serverTimestamp()
-      };
-      await set(roomRef(id), roomData);
-      if(roomData.public){
-        await set(lobbyRef(id), { name, count: 0, max: maxCount, updatedAt: serverTimestamp(), minutes: nowMinutes() });
-      }
+      const id = genRoomCode();
+      const title = (createRoomNameInput.value || 'Harbor Room').slice(0,32);
+      const maxPlayers = parseInt(createMaxInput.value || '32', 10) || 32;
+      const payload = { title, host: localUid, maxPlayers, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), minutes: nowMin() };
+      await set(ref(db, roomPath(id)), payload);
+      // add to lobby listing for freshness
+      await set(ref(db, lobbyPath(id)), { title, count:0, maxPlayers, updatedAt: serverTimestamp(), minutes: nowMin() });
       return id;
     }
 
     async function joinRoom(id){
+      // verify room exists
+      const roomRef = ref(db, roomPath(id));
+      let snapshotOk = false;
+      await new Promise(res => {
+        onValue(roomRef, snap => { snapshotOk = snap.exists(); res(); }, { onlyOnce:true });
+      });
+      if(!snapshotOk){ alert('Room does not exist.'); return false; }
+
+      // check capacity
+      const playersRef = ref(db, roomPath(id + '/players'));
+      let currentCount = 0;
+      await new Promise(res => onValue(playersRef, snap => { currentCount = snap.exists() ? Object.keys(snap.val()).length : 0; res(); }, { onlyOnce:true }));
+      const roomMetaSnap = await new Promise(res => onValue(roomRef, snap => res(snap), { onlyOnce:true }));
+      const meta = roomMetaSnap.val() || {};
+      roomMax = meta.maxPlayers || 50;
+      hostUid = meta.host;
+
+      if(currentCount >= roomMax){ alert('Room is full'); return false; }
+
+      // set local info
       roomId = id;
-      // Check capacity
-      const snapshot = await new Promise(res => onValue(roomRef(id), v=>{res(v)}, {onlyOnce:true}));
-      if(!snapshot.exists()){ alert('Room not found.'); return false; }
-      const val = snapshot.val();
-      maxCount = val.maxPlayers || 50; hostUid = val.hostUid || null;
+      roomLabelEl.textContent = id;
+      maxPlayersShow.textContent = roomMax;
 
-      // Count players first
-      const countSnap = await new Promise(res => onValue(roomRef(id,'players'), v=>res(v), {onlyOnce:true}));
-      const current = countSnap.exists() ? Object.keys(countSnap.val()).length : 0;
-      if(current >= maxCount){ alert('Room is full.'); return false; }
-
-      // Join
-      const color = randomColor(localUid);
-      player.color = color;
-      const pRef = playerRef(id);
-      await set(pRef, { name: localName, x: player.x, y: player.y, color, joinedAt: serverTimestamp() });
+      // put presence
+      const pRef = ref(db, roomPath(id + `/players/${localUid}`));
+      player.color = uidColor(localUid);
+      await set(pRef, { name: localName, x: Math.round(player.x), y: Math.round(player.y), color: player.color, joinedAt: serverTimestamp() });
       onDisconnect(pRef).remove();
 
-      // Show game screen
-      startGameUI(val.name, id, maxCount);
+      // update lobby count
+      const lobbyRef = ref(db, lobbyPath(id));
+      update(lobbyRef, { updatedAt: serverTimestamp(), minutes: nowMin() });
 
-      // Player list listeners
-      onValue(roomRef(id,'players'), snap=>{
-        const c = snap.exists() ? Object.keys(snap.val()).length : 0;
-        playerCountEl.textContent = c;
-        // push to lobby for listing freshness
-        update(lobbyRef(id), { name: val.name || 'Room', count: c, max: maxCount, updatedAt: serverTimestamp(), minutes: nowMinutes() });
-      });
-
-      onChildAdded(roomRef(id,'players'), snap=>{
-        const uid = snap.key; const v = snap.val();
-        if(uid===localUid) return;
-        others.set(uid, { x:v.x, y:v.y, color:v.color||randomColor(uid), name:v.name||'Sailor' });
-      });
-      onChildChanged(roomRef(id,'players'), snap=>{
-        const uid = snap.key; const v = snap.val();
-        if(uid===localUid) return;
-        const o = others.get(uid) || {};
-        others.set(uid, { ...o, x:v.x, y:v.y, color:v.color||o.color, name:v.name||o.name });
-      });
-      onChildRemoved(roomRef(id,'players'), snap=>{
-        others.delete(snap.key);
+      // listen players
+      onValue(ref(db, roomPath(id + '/players')), snap => {
+        const val = snap.val() || {};
+        const count = Object.keys(val).length;
+        playerCountEl.textContent = count;
+        // update lobby
+        update(lobbyRef, { count, updatedAt: serverTimestamp(), minutes: nowMin() });
       });
 
-      // Broadcast my position @10Hz
-      const interval = setInterval(()=>{ if(!roomId) return clearInterval(interval); update(playerRef(id), { x: Math.round(player.x), y: Math.round(player.y) }); }, 100);
+      onChildAdded(ref(db, roomPath(id + '/players')), snap => {
+        if(snap.key === localUid) return;
+        const v = snap.val(); others.set(snap.key, { x:v.x, y:v.y, color:v.color||uidColor(snap.key), name:v.name||'Sailor' });
+      });
+      onChildChanged(ref(db, roomPath(id + '/players')), snap => {
+        if(snap.key === localUid) return;
+        const v = snap.val(); const o = others.get(snap.key) || {};
+        others.set(snap.key, { ...o, x:v.x, y:v.y, color:v.color||o.color, name:v.name||o.name });
+      });
+      onChildRemoved(ref(db, roomPath(id + '/players')), snap => { others.delete(snap.key); });
+
+      // broadcast position at 10Hz
+      const posInterval = setInterval(()=> {
+        if(!roomId){ clearInterval(posInterval); return; }
+        update(ref(db, roomPath(roomId + `/players/${localUid}`)), { x: Math.round(player.x), y: Math.round(player.y) }).catch(()=>{});
+      }, 100);
+
+      // success
       return true;
     }
 
     function leaveRoom(){
       if(!roomId) return;
-      // Remove my presence, then maybe clear lobby if empty (best-effort)
-      remove(playerRef(roomId)).catch(()=>{});
+      remove(ref(db, roomPath(roomId + `/players/${localUid}`))).catch(()=>{});
+      // do not delete the room itself here (host could choose to)
       roomId = null;
       others.clear();
-      stopGameUI();
-      homeScreen.classList.remove('hidden');
+      stopGame();
     }
 
-    async function listRooms(){
-      roomsListEl.innerHTML = '<div class="small muted">Loading…</div>';
-      const q = query(ref(db, 'lobby/rooms'), orderByChild('updatedAt'), limitToLast(50));
-      onValue(q, snap=>{
+    // ------------------ ROOM LISTING ------------------
+    function listRooms(){
+      roomsList.innerHTML = '<div class="small muted">Loading…</div>';
+      const q = query(ref(db, 'lobby/rooms'), orderByChild('updatedAt'), limitToLast(100));
+      onValue(q, snap => {
         const rooms = [];
-        snap.forEach(child=>{
-          const id = child.key, v = child.val()||{};
-          rooms.push({ id, ...v });
-        });
-        rooms.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-        const cutoff = nowMinutes() - 30; // last 30 minutes
-        roomsListEl.innerHTML = '';
-        rooms.filter(r => (r.minutes ?? 0) >= cutoff && (r.count||0) > 0).forEach(r=>{
-          const div = document.createElement('div');
-          div.className='room-item';
-          div.innerHTML = `
-            <div>
-              <div class="room-name">${r.name || 'Room'}</div>
-              <div class="room-meta muted small">${r.id}</div>
+        snap.forEach(child => rooms.push({ id: child.key, ...child.val() }));
+        rooms.sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+        const cutoff = nowMin() - 30;
+        roomsList.innerHTML = '';
+        rooms.filter(r => (r.minutes || 0) >= cutoff).forEach(r => {
+          const div = document.createElement('div'); div.className='room';
+          div.innerHTML = `<div>
+              <div style="font-weight:800">${r.title || 'Room'}</div>
+              <div class="small muted">${r.id}</div>
             </div>
-            <div class="row-tight">
-              <div class="pill">${r.count||0}/${r.max||50}</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div class="pill small">${r.count||0}/${r.maxPlayers||50}</div>
               <button class="btn-ghost small">Join</button>
             </div>`;
-          div.querySelector('button').onclick = async ()=>{
+          div.querySelector('button').onclick = async () => {
             await ensureSignedIn();
             localName = (displayNameInput.value || randomName()).slice(0,16);
-            await joinRoom(r.id);
+            const ok = await joinRoom(r.id);
+            if(ok) startGame();
           };
-          roomsListEl.appendChild(div);
+          roomsList.appendChild(div);
         });
-        if(!roomsListEl.children.length){
-          roomsListEl.innerHTML = '<div class="small muted">No active rooms right now. Create one!</div>';
-        }
+        if(!roomsList.children.length) roomsList.innerHTML = '<div class="small muted">No active public rooms — create one!</div>';
       });
     }
 
-    // -------- UI transitions --------
-    function startGameUI(roomName, id, maxC){
-      homeScreen.classList.add('hidden');
-      gameScreen.classList.remove('hidden');
-      canvas.width = innerWidth; canvas.height = innerHeight;
-      generateRandomMap();
-      roomNameEl.textContent = id; mapNameEl.textContent = currentMap?.name || 'Sea';
-      youTagEl.textContent = `You: ${localName}`; maxCountEl.textContent = maxC;
-      gameRunning = true; gameLoop();
-    }
-    function stopGameUI(){
-      gameRunning = false;
-      gameScreen.classList.add('hidden');
-      // Reset camera so we don't show stale frame when re-entering
-      camera = { x:0, y:0 };
-    }
-
-    // -------- Auth --------
+    // ------------------ AUTH ------------------
     async function ensureSignedIn(){
       if(localUid) return;
-      await signInAnonymously(auth);
+      try{
+        const cred = await signInAnonymously(auth);
+        localUid = cred.user.uid;
+      }catch(err){
+        console.error('Sign-in error', err);
+        alert('Auth failed. Check your Firebase configuration and make sure Anonymous auth is enabled.');
+        throw err;
+      }
     }
-    onAuthStateChanged(auth, async user=>{
+
+    onAuthStateChanged(auth, user => {
       if(user){
         localUid = user.uid;
-        if(!user.displayName && localName){ try{ await updateProfile(user,{displayName:localName}); }catch{} }
-        // Auto-join via ?room=
-        const qRoom = qs.get('room');
-        if(qRoom && !roomId){
-          localName = (displayNameInput.value || randomName()).slice(0,16);
-          await joinRoom(qRoom);
-        }
+        // set displayName on profile if provided
+        if(localName) updateProfile(user, { displayName: localName }).catch(()=>{});
       }
     });
 
-    // -------- Events --------
-    window.addEventListener('keydown', e=>{ keys[e.code]=true; if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault(); });
-    window.addEventListener('keyup',   e=>{ keys[e.code]=false; });
-    window.addEventListener('resize',  ()=>{ canvas.width=innerWidth; canvas.height=innerHeight; });
-    window.addEventListener('contextmenu', e=>e.preventDefault());
-
-    createBtn.onclick = async ()=>{
+    // ------------------ UI / EVENTS ------------------
+    createBtn.onclick = async () => {
       await ensureSignedIn();
       localName = (displayNameInput.value || randomName()).slice(0,16);
-      const id = await createRoom();
-      await joinRoom(id);
-      history.replaceState({}, '', `${location.pathname}?room=${encodeURIComponent(id)}`);
+      try{
+        const id = await createRoom();
+        const ok = await joinRoom(id);
+        if(ok){ history.replaceState({}, '', `${location.pathname}?room=${encodeURIComponent(id)}`); startGame(); }
+      }catch(e){ console.error(e); alert('Failed to create/join room.'); }
     };
 
-    joinCodeBtn.onclick = async ()=>{
-      const code = (joinCodeInput.value||'').trim().toLowerCase();
-      if(!code) return;
+    joinBtn.onclick = async () => {
+      const code = (joinInput.value || '').trim();
+      if(!code) return alert('Enter a room code to join.');
       await ensureSignedIn();
       localName = (displayNameInput.value || randomName()).slice(0,16);
-      await joinRoom(code);
-      history.replaceState({}, '', `${location.pathname}?room=${encodeURIComponent(code)}`);
+      const ok = await joinRoom(code);
+      if(ok){ history.replaceState({}, '', `${location.pathname}?room=${encodeURIComponent(code)}`); startGame(); }
     };
 
-    refreshRooms.onclick = ()=> listRooms();
-    copyInviteBtn.onclick = async ()=>{
-      const link = `${location.origin}${location.pathname}?room=${encodeURIComponent(roomId||'')}`;
-      try{ await navigator.clipboard.writeText(link); copyInviteBtn.textContent='Copied!'; setTimeout(()=>copyInviteBtn.textContent='Copy Invite',1000);}catch{}
+    refreshRoomsBtn.onclick = () => listRooms();
+    autoJoinBtn.onclick = async () => {
+      // join first listed public room
+      await ensureSignedIn();
+      const first = roomsList.querySelector('.room');
+      if(first){
+        const code = first.querySelector('.small.muted').textContent.trim();
+        localName = (displayNameInput.value || randomName()).slice(0,16);
+        const ok = await joinRoom(code);
+        if(ok){ history.replaceState({}, '', `${location.pathname}?room=${encodeURIComponent(code)}`); startGame(); }
+      } else alert('No public rooms available.');
     };
-    leaveBtn.onclick = ()=>{ leaveRoom(); history.replaceState({}, '', location.pathname); };
 
-    // Initial boot
-    listRooms();
-    // Auto sign-in early so listing works even before clicking Create/Join
-    ensureSignedIn();
+    copyLinkBtn.onclick = async () => {
+      if(!roomId) return;
+      const link = `${location.origin}${location.pathname}?room=${encodeURIComponent(roomId)}`;
+      try{ await navigator.clipboard.writeText(link); copyLinkBtn.textContent = 'Copied!'; setTimeout(()=>copyLinkBtn.textContent='Copy invite',1000);}catch{}
+    };
+    leaveBtn.onclick = () => { leaveRoom(); history.replaceState({}, '', location.pathname); };
+
+    window.addEventListener('keydown', e => { keys[e.code] = true; if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault(); });
+    window.addEventListener('keyup', e => { keys[e.code] = false; });
+    window.addEventListener('resize', () => { canvas.width = innerWidth; canvas.height = innerHeight; });
+
+    // ------------------ START / STOP GAME UI ------------------
+    function startGame(){
+      lobbyScreen.style.display = 'none';
+      gameScreen.style.display = 'block';
+      canvas.width = innerWidth; canvas.height = innerHeight;
+      generateMap();
+      youTagEl.textContent = `You: ${localName}`;
+      gameRunning = true;
+      gameLoop();
+    }
+    function stopGame(){
+      gameRunning = false;
+      gameScreen.style.display = 'none';
+      lobbyScreen.style.display = 'flex';
+    }
+
+    // ------------------ AUTO JOIN FROM URL ------------------
+    (async function init(){
+      await ensureSignedIn().catch(()=>{});
+      // If there's a ?room= param, auto-join
+      const params = new URLSearchParams(location.search);
+      const qRoom = params.get('room');
+      if(qRoom){
+        localName = (displayNameInput.value || randomName()).slice(0,16);
+        const ok = await joinRoom(qRoom).catch(()=>false);
+        if(ok) startGame();
+      }
+      listRooms();
+    })();
+
   </script>
 </body>
 </html>
