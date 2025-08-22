@@ -171,16 +171,7 @@
     import { getDatabase, ref, onValue, set, update, onDisconnect, remove, serverTimestamp as rtdbServerTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
     // ❗ Replace with your Firebase project config
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID",
-      databaseURL: "YOUR_DATABASE_URL" // required for Realtime DB presence/positions
-    };
-
+   const firebaseConfig = { apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA", authDomain: "boat-revival.firebaseapp.com", projectId: "boat-revival", storageBucket: "boat-revival.appspot.com", messagingSenderId: "207519236382", appId: "1:207519236382:web:3a61a1b8811fd811e0c90f" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
