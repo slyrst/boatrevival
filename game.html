@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -398,8 +398,11 @@
 
         // ---------- Input Handling ----------
         window.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
-            e.preventDefault();
+            // Don't prevent default in input fields
+            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                keys[e.key.toLowerCase()] = true;
+                e.preventDefault();
+            }
         });
 
         window.addEventListener('keyup', (e) => {
@@ -413,7 +416,13 @@
 
         // ---------- Room Management ----------
         document.getElementById("createBtn").onclick = async () => {
-            const name = document.getElementById("playerName").value.trim() || "Anonymous";
+            const nameInput = document.getElementById("playerName").value.trim();
+            if (!nameInput) {
+                alert("Please enter your name first!");
+                return;
+            }
+
+            const name = nameInput;
             const worldName = document.getElementById("worldName").value.trim() || "Unnamed World";
             const mapType = document.getElementById("mapType").value;
             
@@ -448,11 +457,13 @@
 
         // ---------- Join Room ----------
         async function joinRoom(roomId, roomName, mapType) {
-            if (!player.name) {
-                statusBar.textContent = "Please enter your name first!";
+            const nameInput = document.getElementById("playerName").value.trim();
+            if (!nameInput) {
+                alert("Please enter your name first!");
                 return;
             }
 
+            player.name = nameInput;
             currentRoom = roomId;
             statusBar.textContent = "Joining world...";
 
@@ -515,284 +526,159 @@
                         id, name, map_type, created_by, max_players, created_at,
                         players(count)
                     `)
-                    .order('created_at', { ascending: false })
-                    .limit(10);
+                    .order('created_at', { ascending: false });
 
                 if (error) {
                     statusBar.textContent = "Error loading rooms: " + error.message;
                     return;
                 }
 
-                roomsList.innerHTML = "";
-                
+                roomsList.innerHTML = '';
                 if (!data || data.length === 0) {
-                    roomsList.innerHTML = `
-                        <div class="room-card">
-                            <div class="room-info">
-                                <div class="room-name">No worlds available</div>
-                                <div class="room-details">Create the first world!</div>
-                            </div>
-                        </div>
-                    `;
-                    statusBar.textContent = "No worlds found. Create one!";
+                    roomsList.innerHTML = '<div class="room-card"><div class="room-info">No worlds found</div></div>';
                     return;
                 }
 
                 data.forEach(room => {
-                    const playerCount = room.players?.[0]?.count || 0;
-                    const mapConfig = mapTypeConfigs[room.map_type] || { emoji: '🌍' };
-                    
-                    const roomCard = document.createElement("div");
-                    roomCard.className = "room-card";
-                    roomCard.innerHTML = `
+                    const card = document.createElement('div');
+                    card.className = 'room-card';
+                    card.innerHTML = `
                         <div class="room-info">
-                            <div class="room-name">${mapConfig.emoji} ${room.name}</div>
-                            <div class="room-details">
-                                ${room.map_type} • ${playerCount}/${room.max_players} players<br>
-                                Created by ${room.created_by}
-                            </div>
+                            <div class="room-name">${room.name}</div>
+                            <div class="room-details">Map: ${room.map_type} | Players: ${room.players?.length || 0}/${room.max_players}</div>
                         </div>
-                        <button class="btn btn-join" onclick="joinRoom(${room.id}, '${room.name.replace(/'/g, "\\'")}', '${room.map_type}')">
-                            Join
-                        </button>
+                        <button class="btn btn-join">Join</button>
                     `;
-                    roomsList.appendChild(roomCard);
+                    card.querySelector('button').onclick = () => joinRoom(room.id, room.name, room.map_type);
+                    roomsList.appendChild(card);
                 });
 
-                statusBar.textContent = `Found ${data.length} world(s). Choose one to join!`;
-            } catch (error) {
-                statusBar.textContent = "Connection error: " + error.message;
+                statusBar.textContent = "Rooms loaded!";
+            } catch (err) {
+                statusBar.textContent = "Error: " + err.message;
             }
         }
 
-        // Load rooms on startup and refresh every 5 seconds
         loadRooms();
-        setInterval(loadRooms, 5000);
 
-        // ---------- Map Generation ----------
-        function generateMap(width, height, mapType) {
-            const config = mapTypeConfigs[mapType] || mapTypeConfigs['Grasslands'];
+        // ---------- Game Start ----------
+        function startGame(roomName, mapType) {
+            menu.style.display = 'none';
+            gameDiv.style.display = 'block';
+            roomInfo.textContent = roomName;
+            currentMapType.textContent = mapType;
+
+            gameRunning = true;
+            lastSyncTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ---------- Generate Map ----------
+        function generateMap(width, height, type) {
             const map = [];
-            
+            const config = mapTypeConfigs[type] || mapTypeConfigs['Grasslands'];
             for (let y = 0; y < height; y++) {
-                const row = [];
+                map[y] = [];
                 for (let x = 0; x < width; x++) {
-                    // Use noise-like pattern for varied terrain
-                    const noise = Math.sin(x * 0.1) * Math.cos(y * 0.1) + 
-                                 Math.sin(x * 0.05) * Math.cos(y * 0.05) * 0.5;
-                    
-                    let tileType;
-                    if (noise > 0.2) {
-                        tileType = config.secondary;
-                    } else {
-                        tileType = config.primary;
-                    }
-                    
-                    // Add random variation
-                    if (Math.random() < 0.1) {
-                        const randomTexture = Object.keys(textures)[Math.floor(Math.random() * Object.keys(textures).length)];
-                        tileType = randomTexture;
-                    }
-                    
-                    row.push(tileType);
+                    map[y][x] = (Math.random() < 0.1) ? config.secondary : config.primary;
                 }
-                map.push(row);
             }
-            
             return map;
         }
 
         // ---------- Game Loop ----------
-        function startGame(roomName, mapType) {
-            menu.style.display = "none";
-            gameDiv.style.display = "block";
-            
-            roomInfo.textContent = roomName;
-            currentMapType.textContent = mapType;
-            
-            gameRunning = true;
-            requestAnimationFrame(gameLoop);
-        }
+        let lastSyncTime = 0;
 
-        async function gameLoop() {
+        function gameLoop(timestamp) {
             if (!gameRunning) return;
 
-            // Handle input
-            let dx = 0, dy = 0;
-            const speed = 4;
-            
-            if (keys["w"] || keys["arrowup"]) dy -= speed;
-            if (keys["s"] || keys["arrowdown"]) dy += speed;
-            if (keys["a"] || keys["arrowleft"]) dx -= speed;
-            if (keys["d"] || keys["arrowright"]) dx += speed;
+            // Movement
+            let speed = 5;
+            if (keys['w'] || keys['arrowup']) player.y -= speed;
+            if (keys['s'] || keys['arrowdown']) player.y += speed;
+            if (keys['a'] || keys['arrowleft']) player.x -= speed;
+            if (keys['d'] || keys['arrowright']) player.x += speed;
 
-            // Diagonal movement normalization
-            if (dx !== 0 && dy !== 0) {
-                dx *= 0.707;
-                dy *= 0.707;
+            // Keep inside map
+            player.x = Math.max(0, Math.min(mapWidth - tileSize, player.x));
+            player.y = Math.max(0, Math.min(mapHeight - tileSize, player.y));
+
+            // Camera follows player
+            camera.x = player.x - canvas.width/2;
+            camera.y = player.y - canvas.height/2;
+
+            // Draw
+            drawMap();
+            drawPlayers();
+
+            // Sync with database every 150ms
+            if (timestamp - lastSyncTime > 150 && player.id) {
+                lastSyncTime = timestamp;
+                supabase.from("players").update({ x: player.x, y: player.y }).eq("id", player.id).catch(console.error);
             }
 
-            // Update player position with boundary checking
-            if (dx !== 0 || dy !== 0) {
-                player.x = Math.max(16, Math.min(mapWidth - 16, player.x + dx));
-                player.y = Math.max(16, Math.min(mapHeight - 16, player.y + dy));
+            // Update other players
+            updateOtherPlayers();
 
-                // Update player position in database
-                if (player.id) {
-                    await supabase
-                        .from("players")
-                        .update({ x: player.x, y: player.y })
-                        .eq("id", player.id);
-                }
-            }
-
-            // Update camera to follow player
-            camera.x = player.x - canvas.width / 2;
-            camera.y = player.y - canvas.height / 2;
-            
-            // Keep camera within map bounds
-            camera.x = Math.max(0, Math.min(mapWidth - canvas.width, camera.x));
-            camera.y = Math.max(0, Math.min(mapHeight - canvas.height, camera.y));
-
-            // Get other players
-            try {
-                const { data: players, error } = await supabase
-                    .from("players")
-                    .select("*")
-                    .eq("room_id", currentRoom);
-
-                if (!error && players) {
-                    otherPlayers = players.filter(p => p.id !== player.id);
-                    playerCount.textContent = players.length;
-                    
-                    // Update players list
-                    playersContent.innerHTML = players
-                        .map(p => `<div class="player-item" style="color: ${p.color}">${p.name}${p.id === player.id ? ' (You)' : ''}</div>`)
-                        .join('');
-                }
-            } catch (error) {
-                console.error("Error fetching players:", error);
-            }
-
-            // Render game
-            render();
             requestAnimationFrame(gameLoop);
         }
 
-        // ---------- Rendering ----------
-        function render() {
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Draw map
-            drawMap();
-
-            // Draw all players
-            drawPlayers();
-        }
-
+        // ---------- Draw Map ----------
         function drawMap() {
-            if (!worldMap || worldMap.length === 0) return;
+            const cols = canvas.width / tileSize;
+            const rows = canvas.height / tileSize;
 
             const startX = Math.floor(camera.x / tileSize);
             const startY = Math.floor(camera.y / tileSize);
-            const endX = Math.min(startX + Math.ceil(canvas.width / tileSize) + 1, worldMap[0].length);
-            const endY = Math.min(startY + Math.ceil(canvas.height / tileSize) + 1, worldMap.length);
 
-            for (let y = Math.max(0, startY); y < endY; y++) {
-                for (let x = Math.max(0, startX); x < endX; x++) {
-                    if (!worldMap[y] || !worldMap[y][x]) continue;
-                    
-                    const tileType = worldMap[y][x];
-                    const screenX = x * tileSize - camera.x;
-                    const screenY = y * tileSize - camera.y;
-
-                    // Draw base tile
-                    ctx.fillStyle = textures[tileType] || textures.grass;
-                    ctx.fillRect(screenX, screenY, tileSize, tileSize);
-
-                    // Add texture patterns
-                    ctx.fillStyle = 'rgba(0,0,0,0.1)';
-                    if (tileType === 'grass') {
-                        // Grass pattern
-                        for (let i = 0; i < 3; i++) {
-                            const px = screenX + Math.random() * tileSize;
-                            const py = screenY + Math.random() * tileSize;
-                            ctx.fillRect(px, py, 2, 4);
-                        }
-                    } else if (tileType === 'stone') {
-                        // Stone pattern
-                        ctx.fillRect(screenX + 10, screenY + 10, 20, 20);
-                        ctx.fillRect(screenX + 35, screenY + 25, 15, 15);
-                    } else if (tileType === 'water') {
-                        // Water animation
-                        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-                        const wave = Math.sin(Date.now() * 0.005 + x + y) * 3;
-                        ctx.fillRect(screenX, screenY + wave, tileSize, 3);
+            for (let y = 0; y <= rows; y++) {
+                for (let x = 0; x <= cols; x++) {
+                    const tileX = startX + x;
+                    const tileY = startY + y;
+                    if (worldMap[tileY] && worldMap[tileY][tileX]) {
+                        ctx.fillStyle = worldMap[tileY][tileX];
+                        ctx.fillRect(x*tileSize - (camera.x%tileSize), y*tileSize - (camera.y%tileSize), tileSize, tileSize);
                     }
-
-                    // Tile border
-                    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(screenX, screenY, tileSize, tileSize);
                 }
             }
         }
 
+        // ---------- Draw Players ----------
         function drawPlayers() {
-            // Draw other players first
+            // Draw local player
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x - camera.x, player.y - camera.y, 40, 40);
+
+            // Draw others
             otherPlayers.forEach(p => {
-                drawPlayer(p, false);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x - camera.x, p.y - camera.y, 40, 40);
             });
 
-            // Draw current player on top
-            drawPlayer(player, true);
+            // Update players list UI
+            playersContent.innerHTML = '';
+            [player, ...otherPlayers].forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'player-item';
+                div.textContent = p.name;
+                playersContent.appendChild(div);
+            });
         }
 
-        function drawPlayer(p, isCurrentPlayer) {
-            const screenX = p.x - camera.x;
-            const screenY = p.y - camera.y;
-            const size = 32;
-
-            // Skip if player is off screen
-            if (screenX < -size || screenX > canvas.width || screenY < -size || screenY > canvas.height) {
-                return;
+        // ---------- Update Other Players ----------
+        async function updateOtherPlayers() {
+            if (!currentRoom) return;
+            try {
+                const { data, error } = await supabase.from("players").select("*").eq("room_id", currentRoom);
+                if (error) return;
+                otherPlayers = data.filter(p => p.id !== player.id);
+                playerCount.textContent = data.length;
+            } catch(e) {
+                console.error(e);
             }
-
-            // Player shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
-            ctx.fillRect(screenX - 2, screenY + size - 2, size + 4, 6);
-
-            // Player body
-            ctx.fillStyle = p.color || '#ff6b6b';
-            ctx.fillRect(screenX, screenY, size, size);
-
-            // Player face
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(screenX + 8, screenY + 8, 16, 16);
-
-            // Player eyes
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(screenX + 10, screenY + 12, 4, 4);
-            ctx.fillRect(screenX + 18, screenY + 12, 4, 4);
-
-            // Player outline
-            ctx.strokeStyle = isCurrentPlayer ? '#FFD700' : '#000000';
-            ctx.lineWidth = isCurrentPlayer ? 3 : 2;
-            ctx.strokeRect(screenX, screenY, size, size);
-
-            // Player name
-            ctx.fillStyle = isCurrentPlayer ? '#FFD700' : '#000000';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(p.name, screenX + size/2, screenY - 5);
-            
-            // Reset text align
-            ctx.textAlign = 'left';
         }
 
-        // ---------- Initialize Connection ----------
-        statusBar.textContent = "Connected! Enter your name and create or join a world.";
+        setInterval(updateOtherPlayers, 500);
     </script>
 </body>
 </html>
