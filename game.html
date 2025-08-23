@@ -11,12 +11,14 @@
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
             font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             overflow: hidden;
             color: #333;
         }
+
         /* Menu Screen */
         .menu-screen {
             position: fixed;
@@ -30,6 +32,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             z-index: 1000;
         }
+
         .menu-container {
             background: rgba(255, 255, 255, 0.95);
             padding: 40px;
@@ -39,6 +42,7 @@
             text-align: center;
             backdrop-filter: blur(10px);
         }
+
         .title {
             font-size: 3rem;
             color: #667eea;
@@ -46,16 +50,19 @@
             font-weight: bold;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
+
         .form-row {
             display: flex;
             gap: 15px;
             margin-bottom: 20px;
             flex-wrap: wrap;
         }
+
         .form-group {
             flex: 1;
             min-width: 200px;
         }
+
         .form-group label {
             display: block;
             margin-bottom: 8px;
@@ -63,6 +70,7 @@
             font-weight: bold;
             text-align: left;
         }
+
         .form-group input, .form-group select {
             width: 100%;
             padding: 12px;
@@ -71,10 +79,12 @@
             font-size: 16px;
             transition: border-color 0.3s;
         }
+
         .form-group input:focus, .form-group select:focus {
             outline: none;
             border-color: #667eea;
         }
+
         .btn {
             background: linear-gradient(45deg, #667eea, #764ba2);
             border: none;
@@ -88,16 +98,20 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             margin: 5px;
         }
+
         .btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
+
         .btn-create {
             background: linear-gradient(45deg, #4CAF50, #45a049);
         }
+
         .btn-join {
             background: linear-gradient(45deg, #ff6b6b, #ee5a24);
         }
+
         .status-bar {
             margin: 15px 0;
             padding: 10px;
@@ -105,11 +119,13 @@
             border-radius: 8px;
             font-weight: bold;
         }
+
         .rooms-container {
             max-height: 300px;
             overflow-y: auto;
             margin-top: 20px;
         }
+
         .room-card {
             display: flex;
             justify-content: space-between;
@@ -121,22 +137,27 @@
             border: 1px solid rgba(0,0,0,0.1);
             transition: background 0.2s;
         }
+
         .room-card:hover {
             background: rgba(255,255,255,0.9);
         }
+
         .room-info {
             text-align: left;
         }
+
         .room-name {
             font-weight: bold;
             font-size: 16px;
             color: #333;
         }
+
         .room-details {
             font-size: 12px;
             color: #666;
             margin-top: 5px;
         }
+
         /* Game Screen */
         .game-container {
             display: none;
@@ -145,10 +166,12 @@
             height: 100vh;
             overflow: hidden;
         }
+
         #gameCanvas {
             display: block;
             background: #87CEEB;
         }
+
         .ui-overlay {
             position: absolute;
             top: 20px;
@@ -162,6 +185,7 @@
             border-radius: 10px;
             backdrop-filter: blur(5px);
         }
+
         .controls {
             position: absolute;
             bottom: 20px;
@@ -175,6 +199,7 @@
             border-radius: 8px;
             backdrop-filter: blur(5px);
         }
+
         .top-right {
             position: absolute;
             top: 20px;
@@ -183,6 +208,7 @@
             gap: 10px;
             z-index: 100;
         }
+
         .btn-ghost {
             background: rgba(255,255,255,0.2);
             border: 1px solid rgba(255,255,255,0.5);
@@ -193,9 +219,11 @@
             backdrop-filter: blur(5px);
             transition: background 0.2s;
         }
+
         .btn-ghost:hover {
             background: rgba(255,255,255,0.3);
         }
+
         .players-list {
             position: absolute;
             top: 150px;
@@ -211,20 +239,115 @@
             overflow-y: auto;
             min-width: 150px;
         }
+
         .player-item {
             padding: 5px 0;
             border-bottom: 1px solid rgba(255,255,255,0.2);
         }
+
+        /* Mobile Controls */
+        .mobile-controls {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            gap: 15px;
+        }
+
+        .mobile-dpad {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+
+        .mobile-btn {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            user-select: none;
+            backdrop-filter: blur(5px);
+            transition: all 0.2s;
+        }
+
+        .mobile-btn:active {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(0.9);
+        }
+
+        .mobile-btn-up {
+            top: 0;
+            left: 40px;
+        }
+
+        .mobile-btn-down {
+            bottom: 0;
+            left: 40px;
+        }
+
+        .mobile-btn-left {
+            left: 0;
+            top: 40px;
+        }
+
+        .mobile-btn-right {
+            right: 0;
+            top: 40px;
+        }
+
+        /* Mobile specific styles */
         @media (max-width: 768px) {
             .menu-container {
                 min-width: 90%;
                 padding: 30px 20px;
             }
+
             .title {
                 font-size: 2.5rem;
             }
+
             .form-row {
                 flex-direction: column;
+            }
+
+            .mobile-controls {
+                display: flex;
+            }
+
+            .controls {
+                display: none;
+            }
+
+            .ui-overlay {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            .players-list {
+                font-size: 12px;
+                padding: 10px;
+                min-width: 120px;
+            }
+        }
+
+        /* Touch device detection */
+        @media (hover: none) and (pointer: coarse) {
+            .mobile-controls {
+                display: flex;
+            }
+
+            .controls {
+                display: none;
             }
         }
     </style>
@@ -278,20 +401,34 @@
     <!-- Game Screen -->
     <div id="game" class="game-container">
         <canvas id="gameCanvas"></canvas>
+        
         <div class="ui-overlay">
             <div><strong id="roomInfo">Room Loading...</strong></div>
             <div>Map: <span id="currentMapType">Loading...</span></div>
             <div>Players Online: <span id="playerCount">0</span></div>
         </div>
+        
         <div class="players-list" id="playersList">
             <strong>Players:</strong>
             <div id="playersContent">Loading...</div>
         </div>
+        
         <div class="controls">
             <strong>Controls:</strong><br>
             WASD or Arrow Keys to move<br>
             🎮 Explore the world with friends!
         </div>
+        
+        <!-- Mobile Controls -->
+        <div class="mobile-controls">
+            <div class="mobile-dpad">
+                <div class="mobile-btn mobile-btn-up" data-key="w">▲</div>
+                <div class="mobile-btn mobile-btn-down" data-key="s">▼</div>
+                <div class="mobile-btn mobile-btn-left" data-key="a">◄</div>
+                <div class="mobile-btn mobile-btn-right" data-key="d">►</div>
+            </div>
+        </div>
+        
         <div class="top-right">
             <button id="leaveBtn" class="btn-ghost">Leave World</button>
         </div>
@@ -321,11 +458,11 @@
 
         // ---------- Game Variables ----------
         let currentRoom = null;
-        let player = { 
-            id: null, 
-            name: "", 
-            x: 400, 
-            y: 300, 
+        let player = {
+            id: null,
+            name: "",
+            x: 400,
+            y: 300,
             color: '#ff6b6b',
             lastUpdate: 0
         };
@@ -337,12 +474,13 @@
         let lastPlayerFetch = 0;
         let lastPositionUpdate = 0;
         let positionUpdatePending = false;
-        
+        let playerUpdateSubscription = null;
+
         // Map configuration
         const mapWidth = 2000;
         const mapHeight = 1500;
         const tileSize = 64;
-        
+
         // Texture patterns
         const textures = {
             grass: '#4a7c59',
@@ -354,7 +492,7 @@
             dirt: '#8b4513',
             wood: '#deb887'
         };
-        
+
         const mapTypeConfigs = {
             'Grasslands': { primary: 'grass', secondary: 'stone', emoji: '🌱' },
             'Desert Oasis': { primary: 'sand', secondary: 'water', emoji: '🏜️' },
@@ -371,7 +509,7 @@
         // ---------- Input Handling ----------
         window.addEventListener('keydown', (e) => {
             // Only prevent default for movement keys, not when typing in inputs
-            if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(e.key.toLowerCase()) &&
+            if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(e.key.toLowerCase()) && 
                 document.activeElement !== playerNameInput && 
                 document.activeElement !== worldNameInput) {
                 keys[e.key.toLowerCase()] = true;
@@ -384,13 +522,53 @@
 
         window.addEventListener('keyup', (e) => {
             keys[e.key.toLowerCase()] = false;
-            
             // Don't prevent default for input fields
-            if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(e.key.toLowerCase()) &&
+            if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(e.key.toLowerCase()) && 
                 document.activeElement !== playerNameInput && 
                 document.activeElement !== worldNameInput) {
                 e.preventDefault();
             }
+        });
+
+        // Mobile controls
+        document.querySelectorAll('.mobile-btn').forEach(btn => {
+            const key = btn.dataset.key;
+            
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys[key] = true;
+                btn.style.background = 'rgba(255, 255, 255, 0.5)';
+            });
+            
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys[key] = false;
+                btn.style.background = 'rgba(255, 255, 255, 0.3)';
+            });
+            
+            btn.addEventListener('touchcancel', (e) => {
+                e.preventDefault();
+                keys[key] = false;
+                btn.style.background = 'rgba(255, 255, 255, 0.3)';
+            });
+
+            // Also add mouse events for desktop testing
+            btn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                keys[key] = true;
+                btn.style.background = 'rgba(255, 255, 255, 0.5)';
+            });
+            
+            btn.addEventListener('mouseup', (e) => {
+                e.preventDefault();
+                keys[key] = false;
+                btn.style.background = 'rgba(255, 255, 255, 0.3)';
+            });
+
+            btn.addEventListener('mouseleave', (e) => {
+                keys[key] = false;
+                btn.style.background = 'rgba(255, 255, 255, 0.3)';
+            });
         });
 
         window.addEventListener('resize', () => {
@@ -403,36 +581,36 @@
             const name = document.getElementById("playerName").value.trim();
             const worldName = document.getElementById("worldName").value.trim() || "Unnamed World";
             const mapType = document.getElementById("mapType").value;
-            
+
             // Validate name
             if (!name) {
                 statusBar.textContent = "Please enter your name first!";
                 document.getElementById("playerName").focus();
                 return;
             }
-            
+
             player.name = name;
             statusBar.textContent = "Creating world...";
-            
+
             try {
                 const map = generateMap(Math.ceil(mapWidth / tileSize), Math.ceil(mapHeight / tileSize), mapType);
                 const { data, error } = await supabase
                     .from("rooms")
-                    .insert([{ 
-                        name: worldName, 
-                        map_type: mapType, 
-                        map: map, 
-                        created_by: name, 
-                        max_players: 50 
+                    .insert([{
+                        name: worldName,
+                        map_type: mapType,
+                        map: map,
+                        created_by: name,
+                        max_players: 50
                     }])
                     .select()
                     .single();
-                    
+
                 if (error) {
                     statusBar.textContent = "Error creating world: " + error.message;
                     return;
                 }
-                
+
                 statusBar.textContent = "World created! Joining...";
                 joinRoom(data.id, worldName, mapType);
             } catch (error) {
@@ -443,55 +621,101 @@
         // ---------- Join Room ----------
         async function joinRoom(roomId, roomName, mapType) {
             const name = document.getElementById("playerName").value.trim();
-            
             if (!name) {
                 statusBar.textContent = "Please enter your name first!";
                 document.getElementById("playerName").focus();
                 return;
             }
-            
+
             player.name = name;
             currentRoom = roomId;
             statusBar.textContent = "Joining world...";
-            
+
             try {
                 // Add player to room
                 const { data, error } = await supabase
                     .from("players")
-                    .insert([{ 
-                        room_id: roomId, 
-                        name: player.name, 
-                        x: player.x, 
-                        y: player.y, 
-                        color: player.color 
+                    .insert([{
+                        room_id: roomId,
+                        name: player.name,
+                        x: player.x,
+                        y: player.y,
+                        color: player.color
                     }])
                     .select()
                     .single();
-                    
+
                 if (error) {
                     statusBar.textContent = "Join error: " + error.message;
                     return;
                 }
-                
+
                 player.id = data.id;
                 player.color = data.color;
-                
+
                 // Load room data
                 const { data: roomData, error: roomError } = await supabase
                     .from("rooms")
                     .select("*")
                     .eq("id", roomId)
                     .single();
-                    
+
                 if (roomError) {
                     statusBar.textContent = "Error loading world data";
                     return;
                 }
-                
+
                 worldMap = roomData.map;
                 startGame(roomName || roomData.name, mapType || roomData.map_type);
+                
+                // Set up real-time subscription for player updates
+                setupRealtimeSubscription();
+                
             } catch (error) {
                 statusBar.textContent = "Error joining world: " + error.message;
+            }
+        }
+
+        // ---------- Real-time Updates ----------
+        function setupRealtimeSubscription() {
+            if (playerUpdateSubscription) {
+                playerUpdateSubscription.unsubscribe();
+            }
+
+            playerUpdateSubscription = supabase
+                .channel('player-updates')
+                .on('postgres_changes', 
+                    { 
+                        event: '*', 
+                        schema: 'public', 
+                        table: 'players',
+                        filter: `room_id=eq.${currentRoom}`
+                    }, 
+                    (payload) => {
+                        handlePlayerUpdate(payload);
+                    }
+                )
+                .subscribe();
+        }
+
+        function handlePlayerUpdate(payload) {
+            const { eventType, new: newRecord, old: oldRecord } = payload;
+            
+            if (eventType === 'INSERT' && newRecord.id !== player.id) {
+                // New player joined
+                updatePlayersList();
+            } else if (eventType === 'UPDATE' && newRecord.id !== player.id) {
+                // Player moved - update their position
+                const existingPlayerIndex = otherPlayers.findIndex(p => p.id === newRecord.id);
+                if (existingPlayerIndex >= 0) {
+                    otherPlayers[existingPlayerIndex] = { ...otherPlayers[existingPlayerIndex], ...newRecord };
+                } else {
+                    otherPlayers.push(newRecord);
+                }
+            } else if (eventType === 'DELETE') {
+                // Player left
+                otherPlayers = otherPlayers.filter(p => p.id !== oldRecord.id);
+                updatePlayersList();
             }
         }
 
@@ -499,6 +723,9 @@
         document.getElementById("leaveBtn").onclick = async () => {
             if (player.id) {
                 await supabase.from("players").delete().eq("id", player.id);
+            }
+            if (playerUpdateSubscription) {
+                playerUpdateSubscription.unsubscribe();
             }
             gameRunning = false;
             location.reload();
@@ -512,31 +739,28 @@
                     .select(`id, name, map_type, created_by, max_players, created_at, players(count)`)
                     .order('created_at', { ascending: false })
                     .limit(10);
-                    
+
                 if (error) {
                     statusBar.textContent = "Error loading rooms: " + error.message;
                     return;
                 }
-                
+
                 roomsList.innerHTML = "";
-                
+
                 if (!data || data.length === 0) {
-                    roomsList.innerHTML = `
-                        <div class="room-card">
-                            <div class="room-info">
-                                <div class="room-name">No worlds available</div>
-                                <div class="room-details">Create the first world!</div>
-                            </div>
+                    roomsList.innerHTML = `<div class="room-card">
+                        <div class="room-info">
+                            <div class="room-name">No worlds available</div>
+                            <div class="room-details">Create the first world!</div>
                         </div>
-                    `;
+                    </div>`;
                     statusBar.textContent = "No worlds found. Create one!";
                     return;
                 }
-                
+
                 data.forEach(room => {
                     const playerCount = room.players?.[0]?.count || 0;
                     const mapConfig = mapTypeConfigs[room.map_type] || { emoji: '🌍' };
-                    
                     const roomCard = document.createElement("div");
                     roomCard.className = "room-card";
                     roomCard.innerHTML = `
@@ -551,10 +775,9 @@
                             Join
                         </button>
                     `;
-                    
                     roomsList.appendChild(roomCard);
                 });
-                
+
                 // Add event listeners to all join buttons
                 document.querySelectorAll('.btn-join').forEach(button => {
                     button.addEventListener('click', (e) => {
@@ -564,7 +787,7 @@
                         joinRoom(roomId, roomName, roomType);
                     });
                 });
-                
+
                 statusBar.textContent = `Found ${data.length} world(s). Choose one to join!`;
             } catch (error) {
                 statusBar.textContent = "Connection error: " + error.message;
@@ -582,7 +805,7 @@
         function generateMap(width, height, mapType) {
             const config = mapTypeConfigs[mapType] || mapTypeConfigs['Grasslands'];
             const map = [];
-            
+
             for (let y = 0; y < height; y++) {
                 const row = [];
                 for (let x = 0; x < width; x++) {
@@ -595,18 +818,18 @@
                     } else {
                         tileType = config.primary;
                     }
-                    
+
                     // Add random variation
                     if (Math.random() < 0.1) {
                         const randomTexture = Object.keys(textures)[Math.floor(Math.random() * Object.keys(textures).length)];
                         tileType = randomTexture;
                     }
-                    
+
                     row.push(tileType);
                 }
                 map.push(row);
             }
-            
+
             return map;
         }
 
@@ -617,15 +840,15 @@
             roomInfo.textContent = roomName;
             currentMapType.textContent = mapType;
             gameRunning = true;
-            
+
             // Start the game loop
             requestAnimationFrame(gameLoop);
-            
-            // Start interval for updating player position (less frequent)
-            setInterval(updatePlayerPosition, 100);
-            
+
+            // Start interval for updating player position more frequently
+            setInterval(updatePlayerPosition, 50); // More frequent updates
+
             // Start interval for fetching other players (less frequent)
-            setInterval(updatePlayersList, 1000);
+            setInterval(updatePlayersList, 2000);
         }
 
         async function updatePlayerPosition() {
@@ -633,7 +856,11 @@
                 try {
                     await supabase
                         .from("players")
-                        .update({ x: player.x, y: player.y })
+                        .update({ 
+                            x: player.x, 
+                            y: player.y,
+                            last_seen: new Date().toISOString()
+                        })
                         .eq("id", player.id);
                     positionUpdatePending = false;
                 } catch (error) {
@@ -644,179 +871,6 @@
 
         async function updatePlayersList() {
             if (!currentRoom) return;
-            
+
             try {
                 const { data: players, error } = await supabase
-                    .from("players")
-                    .select("*")
-                    .eq("room_id", currentRoom);
-                    
-                if (!error && players) {
-                    otherPlayers = players.filter(p => p.id !== player.id);
-                    playerCount.textContent = players.length;
-                    
-                    // Update players list
-                    playersContent.innerHTML = players
-                        .map(p => `<div class="player-item" style="color: ${p.color}">${p.name}${p.id === player.id ? ' (You)' : ''}</div>`)
-                        .join('');
-                }
-            } catch (error) {
-                console.error("Error fetching players:", error);
-            }
-        }
-
-        function gameLoop(timestamp) {
-            if (!gameRunning) return;
-            
-            // Handle input
-            let dx = 0, dy = 0;
-            const speed = 10; // Increased speed for better movement
-            
-            if (keys["w"] || keys["arrowup"]) dy -= speed;
-            if (keys["s"] || keys["arrowdown"]) dy += speed;
-            if (keys["a"] || keys["arrowleft"]) dx -= speed;
-            if (keys["d"] || keys["arrowright"]) dx += speed;
-            
-            // Diagonal movement normalization
-            if (dx !== 0 && dy !== 0) {
-                dx *= 0.707;
-                dy *= 0.707;
-            }
-            
-            // Update player position with boundary checking
-            if (dx !== 0 || dy !== 0) {
-                player.x = Math.max(16, Math.min(mapWidth - 16, player.x + dx));
-                player.y = Math.max(16, Math.min(mapHeight - 16, player.y + dy));
-                positionUpdatePending = true;
-            }
-            
-            // Update camera to follow player
-            camera.x = player.x - canvas.width / 2;
-            camera.y = player.y - canvas.height / 2;
-            
-            // Keep camera within map bounds
-            camera.x = Math.max(0, Math.min(mapWidth - canvas.width, camera.x));
-            camera.y = Math.max(0, Math.min(mapHeight - canvas.height, camera.y));
-            
-            // Render game
-            render();
-            requestAnimationFrame(gameLoop);
-        }
-
-        // ---------- Rendering ----------
-        function render() {
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw map
-            drawMap();
-            
-            // Draw all players
-            drawPlayers();
-        }
-
-        function drawMap() {
-            if (!worldMap || worldMap.length === 0) return;
-            
-            const startX = Math.floor(camera.x / tileSize);
-            const startY = Math.floor(camera.y / tileSize);
-            const endX = Math.min(startX + Math.ceil(canvas.width / tileSize) + 1, worldMap[0].length);
-            const endY = Math.min(startY + Math.ceil(canvas.height / tileSize) + 1, worldMap.length);
-            
-            for (let y = Math.max(0, startY); y < endY; y++) {
-                for (let x = Math.max(0, startX); x < endX; x++) {
-                    if (!worldMap[y] || !worldMap[y][x]) continue;
-                    
-                    const tileType = worldMap[y][x];
-                    const screenX = x * tileSize - camera.x;
-                    const screenY = y * tileSize - camera.y;
-                    
-                    // Draw base tile
-                    ctx.fillStyle = textures[tileType] || textures.grass;
-                    ctx.fillRect(screenX, screenY, tileSize, tileSize);
-                    
-                    // Add texture patterns
-                    ctx.fillStyle = 'rgba(0,0,0,0.1)';
-                    if (tileType === 'grass') {
-                        // Grass pattern
-                        for (let i = 0; i < 3; i++) {
-                            const px = screenX + Math.random() * tileSize;
-                            const py = screenY + Math.random() * tileSize;
-                            ctx.fillRect(px, py, 2, 4);
-                        }
-                    } else if (tileType === 'stone') {
-                        // Stone pattern
-                        ctx.fillRect(screenX + 10, screenY + 10, 20, 20);
-                        ctx.fillRect(screenX + 35, screenY + 25, 15, 15);
-                    } else if (tileType === 'water') {
-                        // Water animation
-                        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-                        const wave = Math.sin(Date.now() * 0.005 + x + y) * 3;
-                        ctx.fillRect(screenX, screenY + wave, tileSize, 3);
-                    }
-                    
-                    // Tile border
-                    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(screenX, screenY, tileSize, tileSize);
-                }
-            }
-        }
-
-        function drawPlayers() {
-            // Draw other players first
-            otherPlayers.forEach(p => {
-                drawPlayer(p, false);
-            });
-            
-            // Draw current player on top
-            drawPlayer(player, true);
-        }
-
-        function drawPlayer(p, isCurrentPlayer) {
-            const screenX = p.x - camera.x;
-            const screenY = p.y - camera.y;
-            const size = 32;
-            
-            // Skip if player is off screen
-            if (screenX < -size || screenX > canvas.width || screenY < -size || screenY > canvas.height) {
-                return;
-            }
-            
-            // Player shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.3)';
-            ctx.fillRect(screenX - 2, screenY + size - 2, size + 4, 6);
-            
-            // Player body
-            ctx.fillStyle = p.color || '#ff6b6b';
-            ctx.fillRect(screenX, screenY, size, size);
-            
-            // Player face
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(screenX + 8, screenY + 8, 16, 16);
-            
-            // Player eyes
-            ctx.fillStyle = '#000000';
-            ctx.fillRect(screenX + 10, screenY + 12, 4, 4);
-            ctx.fillRect(screenX + 18, screenY + 12, 4, 4);
-            
-            // Player outline
-            ctx.strokeStyle = isCurrentPlayer ? '#FFD700' : '#000000';
-            ctx.lineWidth = isCurrentPlayer ? 3 : 2;
-            ctx.strokeRect(screenX, screenY, size, size);
-            
-            // Player name
-            ctx.fillStyle = isCurrentPlayer ? '#FFD700' : '#000000';
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(p.name, screenX + size/2, screenY - 5);
-            
-            // Reset text align
-            ctx.textAlign = 'left';
-        }
-
-        // ---------- Initialize Connection ----------
-        statusBar.textContent = "Connected! Enter your name and create or join a world.";
-    </script>
-</body>
-</html>
