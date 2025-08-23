@@ -1,6 +1,4 @@
-Here’s your full file with the duplicate-player bug fixed. I excluded your own record from `otherPlayers` and added a guard in `drawPlayers`, while keeping you visible in the sidebar with “(You)”.
 
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -151,12 +149,12 @@ Here’s your full file with the duplicate-player bug fixed. I excluded your own
   let currentRoom = null;
   let player = { id: null, name: "", x: 400, y: 300, color: '#ff6b6b', lastUpdate: 0 };
   let otherPlayers = [];
+  let playersById = {};
+  let playersChannel = null;
   let worldMap = [];
   let keys = {};
   let gameRunning = false;
   let camera = { x: 0, y: 0 };
-  let lastPlayerFetch = 0;
-  let lastPositionUpdate = 0;
   let positionUpdatePending = false;
 
   // Map configuration
@@ -190,21 +188,29 @@ Here’s your full file with the duplicate-player bug fixed. I excluded your own
   canvas.height = window.innerHeight;
 
   // ---------- Input Handling ----------
+  const movementKeys = new Set(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright']);
+
   window.addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
-    if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key) && document.activeElement !== playerNameInput && document.activeElement !== worldNameInput) {
-      keys[key] = true;
-      e.preventDefault();
-    } else {
-      keys[key] = true;
+    if (movementKeys.has(key)) {
+      if (document.activeElement !== playerNameInput && document.activeElement !== worldNameInput) {
+        keys[key] = true;
+        e.preventDefault();
+      }
     }
   });
   window.addEventListener('keyup', (e) => {
     const key = e.key.toLowerCase();
-    keys[key] = false;
-    if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key) && document.activeElement !== playerNameInput && document.activeElement !== worldNameInput) {
-      e.preventDefault();
+    if (movementKeys.has(key)) {
+      keys[key] = false;
+      if (document.activeElement !== playerNameInput && document.activeElement !== worldNameInput) {
+        e.preventDefault();
+      }
     }
+  });
+  window.addEventListener('blur', () => {
+    // Prevent "stuck keys" when tab/window loses focus
+    keys = {};
   });
   window.addEventListener('resize', () => {
     canvas.width = window.innerWidth;
@@ -244,151 +250,215 @@ Here’s your full file with the duplicate-player bug fixed. I excluded your own
   };
 
   // ---------- Join Room ----------
-async function joinRoom(roomId, roomName, mapType) {
-  const name = document.getElementById("playerName").value.trim();
-  if (!name) {
-    statusBar.textContent = "Please enter your name first!";
-    document.getElementById("playerName").focus();
-    return;
-  }
-  player.name = name;
-  currentRoom = roomId;
-  statusBar.textContent = "Joining world...";
-  try {
-    // Add player to room
-    const { data, error } = await supabase
-      .from("players")
-      .insert([{ room_id: roomId, name: player.name, x: player.x, y: player.y, color: '#ff6b6b' }])
-      .select()
-      .single();
-    if (error) {
-      statusBar.textContent = "Join error: " + error.message;
+  async function joinRoom(roomId, roomName, mapType) {
+    const name = document.getElementById("playerName").value.trim();
+    if (!name) {
+      statusBar.textContent = "Please enter your name first!";
+      document.getElementById("playerName").focus();
       return;
     }
-    player.id = data.id;
-    player.color = data.color;
-    // Load room data
-    const { data: roomData, error: roomError } = await supabase
-      .from("rooms")
-      .select("*")
-      .eq("id", roomId)
-      .single();
-    if (roomError) {
-      statusBar.textContent = "Error loading world data";
-      return;
-    }
-    worldMap = roomData.map;
-    startGame(roomName || roomData.name, mapType || roomData.map_type);
-  } catch (error) {
-    statusBar.textContent = "Error joining world: " + error.message;
-  }
-}
+    player.name = name;
+    currentRoom = roomId;
+    statusBar.textContent = "Joining world...";
+    try {
+      // Add player to room
+      const { data, error } = await supabase
+        .from("players")
+        .insert([{ room_id: roomId, name: player.name, x: player.x, y: player.y, color: '#ff6b6b' }])
+        .select()
+        .single();
+      if (error) {
+        statusBar.textContent = "Join error: " + error.message;
+        return;
+      }
+      player.id = data.id;
+      player.color = data.color;
 
-// ---------- Leave Room ----------
-document.getElementById("leaveBtn").onclick = async () => {
-  if (player.id) {
-    await supabase.from("players").delete().eq("id", player.id);
+      // Load room data
+      const { data: roomData, error: roomError } = await supabase
+        .from("rooms")
+        .select("*")
+        .eq("id", roomId)
+        .single();
+      if (roomError) {
+        statusBar.textContent = "Error loading world data";
+        return;
+      }
+      worldMap = roomData.map;
+
+      startGame(roomName || roomData.name, mapType || roomData.map_type);
+      await primePlayersAndSubscribe(roomId);
+    } catch (error) {
+      statusBar.textContent = "Error joining world: " + error.message;
+    }
   }
-  gameRunning = false;
-  location.reload();
-};
 
-// ---------- Load Available Rooms ----------
-async function loadRooms() {
-  try {
-    const { data, error } = await supabase
-      .from("rooms")
-      .select('id, name, map_type, created_by, max_players, created_at, players(count)')
-      .order('created_at', { ascending: false })
-      .limit(10);
-    if (error) {
-      statusBar.textContent = "Error loading rooms: " + error.message;
-      return;
+  // ---------- Leave Room ----------
+  document.getElementById("leaveBtn").onclick = async () => {
+    if (player.id) {
+      await supabase.from("players").delete().eq("id", player.id);
     }
-    roomsList.innerHTML = "";
-    if (!data || data.length === 0) {
-      roomsList.innerHTML = `<div class="room-card"><div class="room-info"><div class="room-name">No worlds available</div><div class="room-details">Create the first world!</div></div></div>`;
-      statusBar.textContent = "No worlds found. Create one!";
-      return;
+    if (playersChannel) {
+      supabase.removeChannel(playersChannel);
+      playersChannel = null;
     }
+    gameRunning = false;
+    location.reload();
+  };
 
-    data.forEach(room => {
-      const playerCount = room.players?.[0]?.count || 0;
-      const mapConfig = mapTypeConfigs[room.map_type] || { emoji: '🌍' };
-      const roomCard = document.createElement("div");
-      roomCard.className = "room-card";
-      roomCard.innerHTML = `
-        <div class="room-info">
-          <div class="room-name">${mapConfig.emoji} ${room.name}</div>
-          <div class="room-details">
-            ${room.map_type} • ${playerCount}/${room.max_players} players<br />
-            Created by ${room.created_by}
+  // ---------- Load Available Rooms ----------
+  async function loadRooms() {
+    try {
+      const { data, error } = await supabase
+        .from("rooms")
+        .select('id, name, map_type, created_by, max_players, created_at, players(count)')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (error) {
+        statusBar.textContent = "Error loading rooms: " + error.message;
+        return;
+      }
+      roomsList.innerHTML = "";
+      if (!data || data.length === 0) {
+        roomsList.innerHTML = `<div class="room-card"><div class="room-info"><div class="room-name">No worlds available</div><div class="room-details">Create the first world!</div></div></div>`;
+        statusBar.textContent = "No worlds found. Create one!";
+        return;
+      }
+
+      data.forEach(room => {
+        const playerCount = room.players?.[0]?.count || 0;
+        const mapConfig = mapTypeConfigs[room.map_type] || { emoji: '🌍' };
+        const roomCard = document.createElement("div");
+        roomCard.className = "room-card";
+        roomCard.innerHTML = `
+          <div class="room-info">
+            <div class="room-name">${mapConfig.emoji} ${room.name}</div>
+            <div class="room-details">
+              ${room.map_type} • ${playerCount}/${room.max_players} players<br />
+              Created by ${room.created_by}
+            </div>
           </div>
-        </div>
-        <button class="btn btn-join" data-room-id="${room.id}" data-room-name="${room.name.replace(/"/g, '&quot;')}" data-room-type="${room.map_type}">Join</button>
-      `;
-      roomsList.appendChild(roomCard);
-    });
-    // Add event listeners to join buttons
-    document.querySelectorAll('.btn-join').forEach(btn => {
-      btn.onclick = () => {
-        const roomId = btn.getAttribute('data-room-id');
-        const roomName = btn.getAttribute('data-room-name');
-        const roomType = btn.getAttribute('data-room-type');
-        joinRoom(roomId, roomName, roomType);
-      };
-    });
-    statusBar.textContent = `Found ${data.length} world(s). Choose one to join!`;
-  } catch (error) {
-    statusBar.textContent = "Connection error: " + error.message;
-  }
-}
-refreshBtn.addEventListener('click', loadRooms);
-loadRooms();
-
-// ---------- Map Generation ----------
-function generateMap(width, height, mapType) {
-  const config = mapTypeConfigs[mapType] || mapTypeConfigs['Grasslands'];
-  const map = [];
-  for (let y = 0; y < height; y++) {
-    const row = [];
-    for (let x = 0; x < width; x++) {
-      const noise = Math.sin(x * 0.1) * Math.cos(y * 0.1) + Math.sin(x * 0.05) * Math.cos(y * 0.05) * 0.5;
-      let tileType;
-      if (noise > 0.2) {
-        tileType = config.secondary;
-      } else {
-        tileType = config.primary;
-      }
-      if (Math.random() < 0.1) {
-        const texturesKeys = Object.keys(textures);
-        const randTexture = texturesKeys[Math.floor(Math.random() * texturesKeys.length)];
-        tileType = randTexture;
-      }
-      row.push(tileType);
+          <button class="btn btn-join" data-room-id="${room.id}" data-room-name="${room.name.replace(/"/g, '&quot;')}" data-room-type="${room.map_type}">Join</button>
+        `;
+        roomsList.appendChild(roomCard);
+      });
+      document.querySelectorAll('.btn-join').forEach(btn => {
+        btn.onclick = () => {
+          const roomId = btn.getAttribute('data-room-id');
+          const roomName = btn.getAttribute('data-room-name');
+          const roomType = btn.getAttribute('data-room-type');
+          joinRoom(roomId, roomName, roomType);
+        };
+      });
+      statusBar.textContent = `Found ${data.length} world(s). Choose one to join!`;
+    } catch (error) {
+      statusBar.textContent = "Connection error: " + error.message;
     }
-    map.push(row);
   }
-  return map;
-}
+  refreshBtn.addEventListener('click', loadRooms);
+  loadRooms();
 
-// ---------- Game Loop ----------
-function startGame(roomName, mapType) {
-  document.getElementById("menu").style.display = "none";
-  document.querySelector(".game-container").style.display = "block";
-  roomInfo.textContent = roomName;
-  currentMapType.textContent = mapType;
-  gameRunning = true;
-  requestAnimationFrame(gameLoop);
-  // Update player position less frequently
-  setInterval(updatePlayerPosition, 100);
-  // Fetch other players periodically
-  setInterval(updatePlayersList, 1000);
-}
+  // ---------- Map Generation ----------
+  function generateMap(width, height, mapType) {
+    const config = mapTypeConfigs[mapType] || mapTypeConfigs['Grasslands'];
+    const map = [];
+    for (let y = 0; y < height; y++) {
+      const row = [];
+      for (let x = 0; x < width; x++) {
+        const noise = Math.sin(x * 0.1) * Math.cos(y * 0.1) + Math.sin(x * 0.05) * Math.cos(y * 0.05) * 0.5;
+        let tileType;
+        if (noise > 0.2) {
+          tileType = config.secondary;
+        } else {
+          tileType = config.primary;
+        }
+        if (Math.random() < 0.1) {
+          const texturesKeys = Object.keys(textures);
+          const randTexture = texturesKeys[Math.floor(Math.random() * texturesKeys.length)];
+          tileType = randTexture;
+        }
+        row.push(tileType);
+      }
+      map.push(row);
+    }
+    return map;
+  }
 
-// ---------- Update Player Position ----------
-async function updatePlayerPosition() {
-  if (player.id && positionUpdatePending) {
+  // ---------- Game Loop ----------
+  function startGame(roomName, mapType) {
+    document.getElementById("menu").style.display = "none";
+    document.querySelector(".game-container").style.display = "block";
+    roomInfo.textContent = roomName;
+    currentMapType.textContent = mapType;
+    gameRunning = true;
+    requestAnimationFrame(gameLoop);
+    // Update player position at 10Hz (smooth enough, low bandwidth)
+    setInterval(updatePlayerPosition, 100);
+  }
+
+  // ---------- Player Networking ----------
+  async function primePlayersAndSubscribe(roomId) {
+    // Initial snapshot
+    const { data: players, error } = await supabase
+      .from("players")
+      .select("*")
+      .eq("room_id", roomId);
+    if (!error && players) {
+      playersById = {};
+      otherPlayers = [];
+      players.forEach(p => {
+        playersById[p.id] = p;
+        if (p.id !== player.id) {
+          otherPlayers.push({ id: p.id, name: p.name, color: p.color, x: p.x, y: p.y, targetX: p.x, targetY: p.y });
+        }
+      });
+      updatePlayersUI();
+    }
+
+    // Realtime room-scoped subscription
+    if (playersChannel) {
+      supabase.removeChannel(playersChannel);
+      playersChannel = null;
+    }
+    playersChannel = supabase
+      .channel('room_players_' + roomId)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${roomId}` }, (payload) => {
+        const event = payload.eventType;
+        if (event === 'INSERT' || event === 'UPDATE') {
+          const p = payload.new;
+          playersById[p.id] = p;
+          if (p.id !== player.id) {
+            const existing = otherPlayers.find(op => op.id === p.id);
+            if (existing) {
+              existing.targetX = p.x;
+              existing.targetY = p.y;
+              existing.name = p.name;
+              existing.color = p.color;
+            } else {
+              otherPlayers.push({ id: p.id, name: p.name, color: p.color, x: p.x, y: p.y, targetX: p.x, targetY: p.y });
+            }
+          }
+        } else if (event === 'DELETE') {
+          const p = payload.old;
+          delete playersById[p.id];
+          otherPlayers = otherPlayers.filter(op => op.id !== p.id);
+        }
+        updatePlayersUI();
+      })
+      .subscribe();
+  }
+
+  function updatePlayersUI() {
+    const list = Object.values(playersById);
+    playerCount.textContent = list.length;
+    playersContent.innerHTML = list
+      .map(p => `<div class="player-item" style="color: ${p.color}">${p.name}${p.id === player.id ? ' (You)' : ''}</div>`)
+      .join('');
+  }
+
+  // ---------- Update Player Position ----------
+  async function updatePlayerPosition() {
+    if (!player.id || !positionUpdatePending) return;
     try {
       await supabase
         .from("players")
@@ -399,226 +469,179 @@ async function updatePlayerPosition() {
       console.error("Error updating player position:", error);
     }
   }
-}
 
-// ---------- Update Other Players List with Target Positions ----------
-const interpolationSpeed = 0.1; // Smoother movement
-async function updatePlayersList() {
-  if (!currentRoom) return;
-  try {
-    const { data: players, error } = await supabase
-      .from("players")
-      .select("*")
-      .eq("room_id", currentRoom);
+  // ---------- Main Game Loop ----------
+  const interpolationSpeed = 0.18; // Smoother movement
 
-    if (error) throw error;
+  function gameLoop() {
+    if (!gameRunning) return;
 
-    // Everyone except me is rendered as "other players"
-    const remotePlayers = (players || []).filter(p => p.id !== player.id);
+    // Handle local movement
+    let dx = 0, dy = 0;
+    const speed = 10;
+    if (keys['w'] || keys['arrowup']) dy -= speed;
+    if (keys['s'] || keys['arrowdown']) dy += speed;
+    if (keys['a'] || keys['arrowleft']) dx -= speed;
+    if (keys['d'] || keys['arrowright']) dx += speed;
+    if (dx !== 0 && dy !== 0) {
+      dx *= 0.707;
+      dy *= 0.707;
+    }
+    if (dx !== 0 || dy !== 0) {
+      player.x = Math.max(16, Math.min(mapWidth - 16, player.x + dx));
+      player.y = Math.max(16, Math.min(mapHeight - 16, player.y + dy));
+      positionUpdatePending = true;
+    }
 
-    // Upsert remote players with interpolation targets
-    remotePlayers.forEach(p => {
-      const existing = otherPlayers.find(op => op.id === p.id);
-      if (existing) {
-        existing.targetX = p.x;
-        existing.targetY = p.y;
-        existing.name = p.name;
-        existing.color = p.color;
-      } else {
-        otherPlayers.push({ ...p, targetX: p.x, targetY: p.y });
+    // Interpolate other players toward their target positions
+    otherPlayers.forEach(p => {
+      if (typeof p.x === 'number' && typeof p.y === 'number' && typeof p.targetX === 'number' && typeof p.targetY === 'number') {
+        p.x += (p.targetX - p.x) * interpolationSpeed;
+        p.y += (p.targetY - p.y) * interpolationSpeed;
       }
     });
 
-    // Remove players no longer present
-    otherPlayers = otherPlayers.filter(op => remotePlayers.some(p => p.id === op.id));
+    // Camera
+    camera.x = player.x - canvas.width / 2;
+    camera.y = player.y - canvas.height / 2;
+    camera.x = Math.max(0, Math.min(mapWidth - canvas.width, camera.x));
+    camera.y = Math.max(0, Math.min(mapHeight - canvas.height, camera.y));
 
-    // UI: count everyone, list everyone and mark me as (You)
-    playerCount.textContent = players.length;
-    playersContent.innerHTML = (players || [])
-      .map(p => `<div class="player-item" style="color: ${p.color}">${p.name}${p.id === player.id ? ' (You)' : ''}</div>`)
-      .join('');
-  } catch (error) {
-    console.error("Error fetching players:", error);
-  }
-}
+    // Draw everything
+    render();
 
-// ---------- Main Game Loop ----------
-function gameLoop() {
-  if (!gameRunning) return;
-
-  // Handle local movement
-  let dx = 0, dy = 0;
-  const speed = 10;
-  if (keys['w'] || keys['arrowup']) dy -= speed;
-  if (keys['s'] || keys['arrowdown']) dy += speed;
-  if (keys['a'] || keys['arrowleft']) dx -= speed;
-  if (keys['d'] || keys['arrowright']) dx += speed;
-  if (dx !== 0 && dy !== 0) {
-    dx *= 0.707;
-    dy *= 0.707;
-  }
-  if (dx !== 0 || dy !== 0) {
-    player.x = Math.max(16, Math.min(mapWidth - 16, player.x + dx));
-    player.y = Math.max(16, Math.min(mapHeight - 16, player.y + dy));
-    positionUpdatePending = true;
+    requestAnimationFrame(gameLoop);
   }
 
-  // Interpolate other players toward their target positions
-  otherPlayers.forEach(p => {
-    if (p.targetX !== undefined && p.targetY !== undefined) {
-      p.x += (p.targetX - p.x) * interpolationSpeed;
-      p.y += (p.targetY - p.y) * interpolationSpeed;
-    }
-  });
+  // ---------- Rendering ----------
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawMap();
+    drawPlayers();
+  }
 
-  // Camera
-  camera.x = player.x - canvas.width / 2;
-  camera.y = player.y - canvas.height / 2;
-  camera.x = Math.max(0, Math.min(mapWidth - canvas.width, camera.x));
-  camera.y = Math.max(0, Math.min(mapHeight - canvas.height, camera.y));
+  function drawMap() {
+    if (!worldMap || worldMap.length === 0) return;
+    const startX = Math.floor(camera.x / tileSize);
+    const startY = Math.floor(camera.y / tileSize);
+    const endX = Math.min(startX + Math.ceil(canvas.width / tileSize) + 1, worldMap[0].length);
+    const endY = Math.min(startY + Math.ceil(canvas.height / tileSize) + 1, worldMap.length);
+    for (let y = Math.max(0, startY); y < endY; y++) {
+      for (let x = Math.max(0, startX); x < endX; x++) {
+        const tileType = worldMap[y][x];
+        const screenX = x * tileSize - camera.x;
+        const screenY = y * tileSize - camera.y;
 
-  // Draw everything
-  render();
+        ctx.fillStyle = textures[tileType] || textures.grass;
+        ctx.fillRect(screenX, screenY, tileSize, tileSize);
 
-  requestAnimationFrame(gameLoop);
-}
-
-// ---------- Rendering ----------
-function render() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawMap();
-  drawPlayers();
-}
-
-function drawMap() {
-  if (!worldMap || worldMap.length === 0) return;
-  const startX = Math.floor(camera.x / tileSize);
-  const startY = Math.floor(camera.y / tileSize);
-  const endX = Math.min(startX + Math.ceil(canvas.width / tileSize) + 1, worldMap[0].length);
-  const endY = Math.min(startY + Math.ceil(canvas.height / tileSize) + 1, worldMap.length);
-  for (let y = Math.max(0, startY); y < endY; y++) {
-    for (let x = Math.max(0, startX); x < endX; x++) {
-      const tileType = worldMap[y][x];
-      const screenX = x * tileSize - camera.x;
-      const screenY = y * tileSize - camera.y;
-
-      ctx.fillStyle = textures[tileType] || textures.grass;
-      ctx.fillRect(screenX, screenY, tileSize, tileSize);
-
-      // Texture patterns (simplified)
-      ctx.fillStyle = 'rgba(0,0,0,0.1)';
-      if (tileType === 'grass') {
-        for (let i = 0; i < 3; i++) {
-          const px = screenX + Math.random() * tileSize;
-          const py = screenY + Math.random() * tileSize;
-          ctx.fillRect(px, py, 2, 4);
+        // Texture patterns (simplified)
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        if (tileType === 'grass') {
+          for (let i = 0; i < 3; i++) {
+            const px = screenX + Math.random() * tileSize;
+            const py = screenY + Math.random() * tileSize;
+            ctx.fillRect(px, py, 2, 4);
+          }
+        } else if (tileType === 'stone') {
+          ctx.fillRect(screenX + 10, screenY + 10, 20, 20);
+          ctx.fillRect(screenX + 35, screenY + 25, 15, 15);
+        } else if (tileType === 'water') {
+          ctx.fillStyle = 'rgba(255,255,255,0.3)';
+          const wave = Math.sin(Date.now() * 0.005 + x + y) * 3;
+          ctx.fillRect(screenX, screenY + wave, tileSize, 3);
         }
-      } else if (tileType === 'stone') {
-        ctx.fillRect(screenX + 10, screenY + 10, 20, 20);
-        ctx.fillRect(screenX + 35, screenY + 25, 15, 15);
-      } else if (tileType === 'water') {
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        const wave = Math.sin(Date.now() * 0.005 + x + y) * 3;
-        ctx.fillRect(screenX, screenY + wave, tileSize, 3);
+        ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(screenX, screenY, tileSize, tileSize);
       }
-      ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(screenX, screenY, tileSize, tileSize);
     }
   }
-}
 
-function drawPlayers() {
-  // Draw other players first (never draw myself here)
-  otherPlayers.forEach(p => {
-    if (p.id !== player.id) drawPlayer(p, false);
-  });
-  // Draw local player on top
-  drawPlayer(player, true);
-}
+  function drawPlayers() {
+    // Draw other players first (never draw myself here)
+    otherPlayers.forEach(p => {
+      if (p.id !== player.id) drawPlayer(p, false);
+    });
+    // Draw local player on top
+    drawPlayer(player, true);
+  }
 
-function drawPlayer(p, isCurrentPlayer) {
-  const screenX = p.x - camera.x;
-  const screenY = p.y - camera.y;
-  const size = 32;
-  if (screenX < -size || screenX > canvas.width || screenY < -size || screenY > canvas.height) return;
+  function drawPlayer(p, isCurrentPlayer) {
+    const screenX = p.x - camera.x;
+    const screenY = p.y - camera.y;
+    const size = 32;
+    if (screenX < -size || screenX > canvas.width || screenY < -size || screenY > canvas.height) return;
 
-  ctx.fillStyle = 'rgba(0,0,0,0.3)';
-  ctx.fillRect(screenX - 2, screenY + size - 2, size + 4, 6);
-  ctx.fillStyle = p.color || '#ff6b6b';
-  ctx.fillRect(screenX, screenY, size, size);
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(screenX + 8, screenY + 8, 16, 16);
-  ctx.fillStyle = '#000000';
-  ctx.fillRect(screenX + 10, screenY + 12, 4, 4);
-  ctx.fillRect(screenX + 18, screenY + 12, 4, 4);
-  ctx.strokeStyle = isCurrentPlayer ? '#FFD700' : '#000000';
-  ctx.lineWidth = isCurrentPlayer ? 3 : 2;
-  ctx.strokeRect(screenX, screenY, size, size);
-  ctx.fillStyle = isCurrentPlayer ? '#FFD700' : '#000000';
-  ctx.font = 'bold 12px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText(p.name, screenX + size/2, screenY - 5);
-  ctx.textAlign = 'left';
-}
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(screenX - 2, screenY + size - 2, size + 4, 6);
+    ctx.fillStyle = p.color || '#ff6b6b';
+    ctx.fillRect(screenX, screenY, size, size);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(screenX + 8, screenY + 8, 16, 16);
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(screenX + 10, screenY + 12, 4, 4);
+    ctx.fillRect(screenX + 18, screenY + 12, 4, 4);
+    ctx.strokeStyle = isCurrentPlayer ? '#FFD700' : '#000000';
+    ctx.lineWidth = isCurrentPlayer ? 3 : 2;
+    ctx.strokeRect(screenX, screenY, size, size);
+    ctx.fillStyle = isCurrentPlayer ? '#FFD700' : '#000000';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(p.name, screenX + size/2, screenY - 5);
+    ctx.textAlign = 'left';
+  }
 
-// ----------- Initialize connection ---------
-statusBar.textContent = "Connected! Enter your name and create or join a world.";
+  // ----------- Initialize connection ---------
+  statusBar.textContent = "Connected! Enter your name and create or join a world.";
 
-// ----------- Mobile controls setup -----------
-// Detect if device is mobile
-const isMobile = window.innerWidth <= 768;
+  // ----------- Mobile controls setup -----------
+  const isMobile = window.innerWidth <= 768;
+  if (isMobile) {
+    const controlsContainer = document.createElement('div');
+    controlsContainer.style.position = 'absolute';
+    controlsContainer.style.bottom = '80px';
+    controlsContainer.style.left = '50%';
+    controlsContainer.style.transform = 'translateX(-50%)';
+    controlsContainer.style.display = 'flex';
+    controlsContainer.style.gap = '10px';
+    controlsContainer.style.zIndex = '200';
 
-// Create mobile control buttons if on mobile
-if (isMobile) {
-  const controlsContainer = document.createElement('div');
-  controlsContainer.style.position = 'absolute';
-  controlsContainer.style.bottom = '80px';
-  controlsContainer.style.left = '50%';
-  controlsContainer.style.transform = 'translateX(-50%)';
-  controlsContainer.style.display = 'flex';
-  controlsContainer.style.gap = '10px';
-  controlsContainer.style.zIndex = '200';
+    const createButton = (label, key) => {
+      const btn = document.createElement('button');
+      btn.innerHTML = label;
+      btn.style.width = '50px';
+      btn.style.height = '50px';
+      btn.style.borderRadius = '50%';
+      btn.style.border = 'none';
+      btn.style.background = 'rgba(255,255,255,0.7)';
+      btn.style.fontSize = '1.5rem';
+      btn.style.cursor = 'pointer';
+      const press = () => { keys[key] = true; };
+      const release = () => { keys[key] = false; };
+      btn.addEventListener('touchstart', (e) => { e.preventDefault(); press(); }, { passive: false });
+      btn.addEventListener('touchend', (e) => { e.preventDefault(); release(); }, { passive: false });
+      btn.addEventListener('touchcancel', (e) => { e.preventDefault(); release(); }, { passive: false });
+      btn.addEventListener('mousedown', (e) => { e.preventDefault(); press(); });
+      btn.addEventListener('mouseup', (e) => { e.preventDefault(); release(); });
+      btn.addEventListener('mouseleave', (e) => { e.preventDefault(); release(); });
+      return btn;
+    };
 
-  const createButton = (label, key) => {
-    const btn = document.createElement('button');
-    btn.innerHTML = label;
-    btn.style.width = '50px';
-    btn.style.height = '50px';
-    btn.style.borderRadius = '50%';
-    btn.style.border = 'none';
-    btn.style.background = 'rgba(255,255,255,0.7)';
-    btn.style.fontSize = '1.5rem';
-    btn.style.cursor = 'pointer';
-    // Set key on press
-    const press = () => { keys[key] = true; };
-    const release = () => { keys[key] = false; };
-    btn.addEventListener('touchstart', (e) => { e.preventDefault(); press(); });
-    btn.addEventListener('mousedown', (e) => { e.preventDefault(); press(); });
-    btn.addEventListener('touchend', (e) => { e.preventDefault(); release(); });
-    btn.addEventListener('mouseup', (e) => { e.preventDefault(); release(); });
-    return btn;
-  };
+    const upBtn = createButton('↑', 'w');
+    const downBtn = createButton('↓', 's');
+    const leftBtn = createButton('←', 'a');
+    const rightBtn = createButton('→', 'd');
 
-  // Up
-  const upBtn = createButton('↑', 'w');
-  // Down
-  const downBtn = createButton('↓', 's');
-  // Left
-  const leftBtn = createButton('←', 'a');
-  // Right
-  const rightBtn = createButton('→', 'd');
+    controlsContainer.appendChild(upBtn);
+    controlsContainer.appendChild(downBtn);
+    controlsContainer.appendChild(leftBtn);
+    controlsContainer.appendChild(rightBtn);
 
-  controlsContainer.appendChild(upBtn);
-  controlsContainer.appendChild(downBtn);
-  controlsContainer.appendChild(leftBtn);
-  controlsContainer.appendChild(rightBtn);
+    document.body.appendChild(controlsContainer);
+  }
 
-  document.body.appendChild(controlsContainer);
-}
-
-// ---------- End of code ----------
+  // ---------- End of code ----------
 </script>
 </body>
 </html>
-```
