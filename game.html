@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>2D Roblox Multiplayer</title>
+<title>Boat</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -241,47 +241,47 @@
   };
 
   // ---------- Join Room ----------
-  async function joinRoom(roomId, roomName, mapType) {
-    const name = document.getElementById("playerName").value.trim();
-    if (!name) {
-      statusBar.textContent = "Please enter your name first!";
-      document.getElementById("playerName").focus();
+async function joinRoom(roomId, roomName, mapType) {
+  const name = document.getElementById("playerName").value.trim();
+  if (!name) {
+    statusBar.textContent = "Please enter your name first!";
+    document.getElementById("playerName").focus();
+    return;
+  }
+  player.name = name;
+  currentRoom = roomId;
+  statusBar.textContent = "Joining world...";
+  try {
+    // Add player to room
+    const { data, error } = await supabase
+      .from("players")
+      .insert([{ room_id: roomId, name: player.name, x: player.x, y: player.y, color: '#ff6b6b' }])
+      .select()
+      .single();
+    if (error) {
+      statusBar.textContent = "Join error: " + error.message;
       return;
     }
-    player.name = name;
-    currentRoom = roomId;
-    statusBar.textContent = "Joining world...";
-    try {
-      // Add player to room
-      const { data, error } = await supabase
-        .from("players")
-        .insert([{ room_id: roomId, name: player.name, x: player.x, y: player.y, color: player.color }])
-        .select()
-        .single();
-      if (error) {
-        statusBar.textContent = "Join error: " + error.message;
-        return;
-      }
-      player.id = data.id;
-      player.color = data.color;
-      // Load room data
-      const { data: roomData, error: roomError } = await supabase
-        .from("rooms")
-        .select("*")
-        .eq("id", roomId)
-        .single();
-      if (roomError) {
-        statusBar.textContent = "Error loading world data";
-        return;
-      }
-      worldMap = roomData.map;
-      startGame(roomName || roomData.name, mapType || roomData.map_type);
-    } catch (error) {
-      statusBar.textContent = "Error joining world: " + error.message;
+    player.id = data.id;
+    player.color = data.color;
+    // Load room data
+    const { data: roomData, error: roomError } = await supabase
+      .from("rooms")
+      .select("*")
+      .eq("id", roomId)
+      .single();
+    if (roomError) {
+      statusBar.textContent = "Error loading world data";
+      return;
     }
+    worldMap = roomData.map;
+    startGame(roomName || roomData.name, mapType || roomData.map_type);
+  } catch (error) {
+    statusBar.textContent = "Error joining world: " + error.message;
   }
+}
 
-  // ---------- Leave Room ----------
+// ---------- Leave Room ----------
 document.getElementById("leaveBtn").onclick = async () => {
   if (player.id) {
     await supabase.from("players").delete().eq("id", player.id);
@@ -342,7 +342,6 @@ async function loadRooms() {
 }
 refreshBtn.addEventListener('click', loadRooms);
 loadRooms();
-setInterval(loadRooms, 5000);
 
 // ---------- Map Generation ----------
 function generateMap(width, height, mapType) {
@@ -399,7 +398,8 @@ async function updatePlayerPosition() {
   }
 }
 
-// ---------- Update Other Players List ----------
+// ---------- Update Other Players List with Target Positions ----------
+const interpolationSpeed = 0.1; // Smoother movement
 async function updatePlayersList() {
   if (!currentRoom) return;
   try {
@@ -408,9 +408,23 @@ async function updatePlayersList() {
       .select("*")
       .eq("room_id", currentRoom);
     if (!error && players) {
-      otherPlayers = players.filter(p => p.id !== player.id);
+      // Sync existing and new players
+      players.forEach(p => {
+        let existing = otherPlayers.find(op => op.id === p.id);
+        if (existing) {
+          existing.targetX = p.x;
+          existing.targetY = p.y;
+        } else {
+          p.targetX = p.x;
+          p.targetY = p.y;
+          otherPlayers.push(p);
+        }
+      });
+      // Remove players no longer in room
+      otherPlayers = otherPlayers.filter(p => players.some(p2 => p2.id === p.id));
+      // Update count
       playerCount.textContent = players.length;
-      // Update display if needed (positions are from server)
+      // Optional: update display names
       playersContent.innerHTML = otherPlayers
         .map(p => `<div class="player-item" style="color: ${p.color}">${p.name}${p.id === player.id ? ' (You)' : ''}</div>`)
         .join('');
@@ -420,11 +434,11 @@ async function updatePlayersList() {
   }
 }
 
-// ---------- Game Loop ----------
+// ---------- Main Game Loop ----------
 function gameLoop() {
   if (!gameRunning) return;
 
-  // Handle movement
+  // Handle local movement
   let dx = 0, dy = 0;
   const speed = 10;
   if (keys['w'] || keys['arrowup']) dy -= speed;
@@ -441,13 +455,21 @@ function gameLoop() {
     positionUpdatePending = true;
   }
 
-  // Camera follows player
+  // Interpolate other players toward their target positions
+  otherPlayers.forEach(p => {
+    if (p.targetX !== undefined && p.targetY !== undefined) {
+      p.x += (p.targetX - p.x) * interpolationSpeed;
+      p.y += (p.targetY - p.y) * interpolationSpeed;
+    }
+  });
+
+  // Camera
   camera.x = player.x - canvas.width / 2;
   camera.y = player.y - canvas.height / 2;
   camera.x = Math.max(0, Math.min(mapWidth - canvas.width, camera.x));
   camera.y = Math.max(0, Math.min(mapHeight - canvas.height, camera.y));
 
-  // Render
+  // Draw everything
   render();
 
   requestAnimationFrame(gameLoop);
@@ -503,7 +525,7 @@ function drawPlayers() {
   otherPlayers.forEach(p => {
     drawPlayer(p, false);
   });
-  // Draw current player on top
+  // Draw local player on top
   drawPlayer(player, true);
 }
 
@@ -536,7 +558,6 @@ function drawPlayer(p, isCurrentPlayer) {
 statusBar.textContent = "Connected! Enter your name and create or join a world.";
 
 // ----------- Mobile controls setup -----------
-
 // Detect if device is mobile
 const isMobile = window.innerWidth <= 768;
 
@@ -588,6 +609,7 @@ if (isMobile) {
   document.body.appendChild(controlsContainer);
 }
 
+// ---------- End of code ----------
 </script>
 </body>
 </html>
