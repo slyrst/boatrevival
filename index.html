@@ -1,191 +1,736 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Boat</title>
-<style>
-  body { margin:0; font-family: Arial, sans-serif; background: linear-gradient(180deg,#fce4ec,#fff); color:#333; }
-  header { background: #ff69b4; color: white; padding: 15px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; }
-  header h1 { margin:0; font-size:1.5em; }
-  .search-bar { display: flex; gap: 5px; flex-wrap: wrap; }
-  .search-bar input { padding: 6px; border-radius: 6px; border: none; width: 200px; max-width: 50vw; }
-  .search-bar button { padding:6px 12px; background:white; color:#ff69b4; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
-  .search-bar button:hover { background:#ffe6f0; }
-  nav { display: flex; gap:10px; flex-wrap: wrap; margin-top:5px; }
-  nav button, nav a { background: white; border: none; padding: 8px 15px; border-radius: 8px; color: #ff69b4; font-weight:bold; cursor:pointer; text-decoration:none; }
-  nav button:hover, nav a:hover { background:#ffe6f0; }
-  main { padding:20px; max-width:1000px; margin:auto; }
-  .greeting { text-align:center; margin-bottom:20px; }
-  .greeting img { width:80px; height:80px; border-radius:50%; margin-bottom:10px; }
-  section { margin:20px 0; }
-  h2 { border-bottom:2px solid #ff69b4; padding-bottom:5px; margin-bottom:10px; }
-  .card-container { display:flex; gap:15px; overflow-x:auto; padding-bottom:10px; }
-  .card { min-width:150px; background:white; padding:10px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); text-align:center; flex-shrink:0; }
-  .card img { width:100%; border-radius:8px; margin-bottom:8px; }
-  .card button { margin-top:5px; background:#ff69b4; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold; }
-  .card button:hover { background:#ff4c99; }
-  footer { background:#ff69b4; color:white; text-align:center; padding:10px; margin-top:30px; }
-  @media (max-width:600px){ header{ flex-direction:column; align-items:flex-start; } .card-container{ gap:10px; } }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Yeşil Baş Shop — 3D Model Pazaryeri</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+    body{background:#fafafa;color:#222;line-height:1.45}
+    header{background:#fff;border-bottom:1px solid #eee;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:10}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:46px;height:46px;background:linear-gradient(135deg,#2ecc71,#0ea15b);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px}
+    .brand h1{font-size:20px}
+    .search{flex:1;margin:0 20px}
+    .search input{width:100%;padding:12px 14px;border-radius:28px;border:1px solid #eee;background:#f7f7f7}
+    .header-actions{display:flex;gap:10px;align-items:center}
+    .btn{background:#ff6f61;color:#fff;padding:9px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
+    .btn.secondary{background:#fff;color:#ff6f61;border:1px solid #ff6f61}
+    .btn.ghost{background:#fff;color:#444;border:1px solid #ddd}
+    .btn.small{padding:6px 10px;border-radius:8px;font-weight:600}
+    main{padding:22px;max-width:1200px;margin:12px auto;display:grid;grid-template-columns:320px 1fr;gap:18px}
+    .sidebar{background:#fff;padding:16px;border-radius:8px;border:1px solid #eee}
+    .card{background:#fff;padding:14px;border-radius:8px;border:1px solid #eee;margin-bottom:14px}
+    .section-title{font-weight:700;margin-bottom:8px;color:#333}
+    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+    .product{background:#fff;border:1px solid #eee;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px}
+    .product img{width:100%;height:160px;object-fit:cover;border-radius:8px}
+    .p-title{font-weight:700}
+    .p-meta{display:flex;justify-content:space-between;align-items:center}
+    .price{font-weight:800;color:#0b8457}
+    .stock{font-size:12px;padding:4px 8px;border-radius:8px;background:#f0f7f3;color:#0b8457}
+    .stock.low{background:#fff6f0;color:#b44;border:1px dashed #f1c9b8}
+    .badge{display:inline-block;font-size:12px;padding:3px 8px;border-radius:999px;background:#f3f4f6;color:#333;border:1px solid #eee}
+    .small{font-size:13px;color:#666}
+    .controls{display:flex;gap:8px;margin-top:6px}
+    .pill{font-size:12px;padding:3px 8px;border-radius:999px;border:1px solid #eee;background:#f7f7f7}
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);z-index:50}
+    .modal.open{display:flex}
+    .modal .panel{width:980px;max-width:95%;background:#fff;border-radius:12px;padding:16px;max-height:90vh;overflow:auto;border:1px solid #eee;box-shadow:0 12px 40px rgba(0,0,0,.12)}
+    label{display:block;margin-top:8px;font-weight:600}
+    input[type="text"], input[type="number"], input[type="password"], select, textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;margin-top:6px;background:#fff}
+    .row{display:flex;gap:12px}
+    .row .col{flex:1}
+    .divider{height:1px;background:#eee;margin:10px 0}
+    /* Admin Tabs */
+    .tabs{display:flex;gap:8px;border-bottom:1px solid #eee;margin-top:10px}
+    .tab{padding:8px 12px;border-radius:8px 8px 0 0;border:1px solid #eee;border-bottom:none;background:#f9fafb;color:#444;cursor:pointer}
+    .tab.active{background:#fff;color:#111;font-weight:700}
+    .tab-panel{display:none;padding-top:12px}
+    .tab-panel.active{display:block}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+    .table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    .table th{font-size:12px;text-align:left;color:#666;padding:6px}
+    .table td{background:#fff;border:1px solid #eee;padding:10px;vertical-align:top}
+    /* Toast */
+    #toast{position:fixed;right:16px;bottom:16px;display:none;min-width:220px;max-width:70vw;background:#111;color:#fff;padding:12px 14px;border-radius:10px;box-shadow:0 10px 24px rgba(0,0,0,.2);z-index:60}
+    #toast.show{display:block;animation:fadein .2s ease, fadeout .2s ease 2.6s forwards}
+    @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    @keyframes fadeout{to{opacity:0;transform:translateY(8px)}}
+    @media(max-width:900px){ main{grid-template-columns:1fr; padding:12px} .search{display:none} .modal .panel{width:96%} }
+    mark{background:#ffef99;padding:0 2px;border-radius:3px}
+  </style>
 </head>
 <body>
 
 <header>
-  <h1>Boat Revival</h1>
-  <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="Search users...">
-    <button onclick="searchUser()">Search</button>
+  <div class="brand">
+    <div class="logo">YB</div>
+    <div>
+      <h1 id="shopTitle">Yeşil Baş Shop</h1>
+      <div class="small" style="font-size:13px;color:#777">3D Model Pazaryeri</div>
+    </div>
   </div>
-  <nav id="navBtns"></nav>
+
+  <div class="search">
+    <input id="searchInput" placeholder="Model, kategori, renk veya yazar ara..." />
+  </div>
+
+  <div class="header-actions">
+    <button class="btn" id="openAdminBtn">Admin Girişi</button>
+    <button class="btn secondary" id="openCartBtn">Sepet (<span id="cartCount">0</span>)</button>
+  </div>
 </header>
 
 <main>
-  <div class="greeting" id="greeting">
-    <h2>Welcome to Boat Revival</h2>
-    <p>Loading user...</p>
-  </div>
+  <aside class="sidebar">
+    <div class="card">
+      <div class="section-title">Kategoriler</div>
+      <div class="small">3D Model, Texture, Rig, Environment, Asset Pack</div>
+    </div>
 
-  <section id="searchResultsSection" style="display:none;">
-    <h2>Search Results</h2>
-    <div class="card-container" id="searchResults"></div>
-  </section>
+    <div class="card">
+      <div class="section-title">Filtreler</div>
+      <div class="small">Renk</div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn ghost small filterColor" data-color="">Hepsi</button>
+        <button class="btn ghost small filterColor" data-color="Yeşil">Yeşil</button>
+        <button class="btn ghost small filterColor" data-color="Siyah">Siyah</button>
+        <button class="btn ghost small filterColor" data-color="Beyaz">Beyaz</button>
+      </div>
+    </div>
+
+    <!-- NOT: Admin bildirimleri herkese görünmesin diye kaldırıldı -->
+  </aside>
 
   <section>
-    <h2>Popular Games</h2>
-    <div class="card-container" id="games">
-      <div class="card"><p>Loading games...</p></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <h2 style="font-size:18px">Popüler Ürünler</h2>
+      <div class="small">Tema: 3D Modeling</div>
     </div>
-  </section>
 
-  <section>
-    <h2>Friends</h2>
-    <div class="card-container" id="friends">
-      <div class="card"><p>Loading friends...</p></div>
-    </div>
-  </section>
-
-  <section>
-    <h2>News</h2>
-    <div class="card-container" id="news">
-      <div class="card"><p>Loading news...</p></div>
-    </div>
+    <div id="productsContainer" class="products"></div>
   </section>
 </main>
 
-<footer>
-  &copy; 2025 Boat Revival
-</footer>
+<!-- Sepet -->
+<div id="cartModal" class="modal">
+  <div class="panel">
+    <h3>Sepet</h3>
+    <div id="cartList"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn" id="checkoutBtn">Satın Al</button>
+      <button class="btn secondary" id="closeCartBtn">Kapat</button>
+    </div>
+  </div>
+</div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, query, where, addDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+<!-- Admin -->
+<div id="adminModal" class="modal">
+  <div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <h3>Admin Paneli — Yeşil Baş Shop</h3>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="addProductBtn">+ Yeni Ürün</button>
+        <button class="btn secondary" id="exportBtn">Dışa Aktar (JSON)</button>
+        <label class="btn ghost" for="importFile" style="cursor:pointer">İçe Aktar</label>
+        <input id="importFile" type="file" accept="application/json" style="display:none" />
+        <button class="btn secondary" id="closeAdminBtn">Çıkış</button>
+      </div>
+    </div>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBAffjU7-HLGsXPmdXSqjXS3KxgXxc7tBA",
-  authDomain: "boat-revival.firebaseapp.com",
-  projectId: "boat-revival",
-  storageBucket: "boat-revival.appspot.com",
-  messagingSenderId: "207519236382",
-  appId: "1:207519236382:web:3a61a1b8811fd811e0c90f"
+    <div class="tabs" style="margin-top:12px">
+      <div class="tab active" data-tab="tabProducts">Ürünler</div>
+      <div class="tab" data-tab="tabOrders">Siparişler</div>
+      <div class="tab" data-tab="tabComments">Yorumlar</div>
+      <div class="tab" data-tab="tabSettings">Ayarlar</div>
+      <div class="tab" data-tab="tabNotifications">Bildirimler</div>
+    </div>
+
+    <div id="tabProducts" class="tab-panel active">
+      <div class="toolbar">
+        <input id="adminSearch" placeholder="Ürün ara..." style="flex:1;min-width:180px;padding:10px;border-radius:8px;border:1px solid #ddd" />
+        <select id="adminSort">
+          <option value="">Sırala</option>
+          <option value="title_asc">Başlık A→Z</option>
+          <option value="price_asc">Fiyat Artan</option>
+          <option value="price_desc">Fiyat Azalan</option>
+          <option value="stock_asc">Stok Artan</option>
+          <option value="stock_desc">Stok Azalan</option>
+        </select>
+        <label class="small"><input id="filterLowStock" type="checkbox" /> Düşük stok (&le;3)</label>
+        <button class="btn ghost small" id="bulkDeleteBtn">Toplu Sil</button>
+      </div>
+      <div id="adminProducts"></div>
+    </div>
+
+    <div id="tabOrders" class="tab-panel">
+      <div class="toolbar">
+        <select id="orderFilter">
+          <option value="">Tümü</option>
+          <option value="Yeni">Yeni</option>
+          <option value="Hazırlandı">Hazırlandı</option>
+          <option value="Kargolandı">Kargolandı</option>
+          <option value="İptal">İptal</option>
+        </select>
+      </div>
+      <div id="adminOrders"></div>
+    </div>
+
+    <div id="tabComments" class="tab-panel">
+      <div id="adminComments"></div>
+    </div>
+
+    <div id="tabSettings" class="tab-panel">
+      <div class="row">
+        <div class="col card">
+          <div class="section-title">Mağaza Ayarları</div>
+          <label>Mağaza Adı</label>
+          <input id="cfgShopName" type="text" />
+          <label>Para Birimi Sembolü</label>
+          <input id="cfgCurrency" type="text" placeholder="₺" />
+          <label>Admin Kodu</label>
+          <input id="cfgAdminCode" type="password" />
+          <div class="small">Admin kodu tarayıcınızda saklanır.</div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn" id="saveSettingsBtn">Kaydet</button>
+            <button class="btn ghost" id="clearDataBtn">Tüm Veriyi Sıfırla</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tabNotifications" class="tab-panel">
+      <div class="section-title">Admin Bildirimleri</div>
+      <div id="adminNotifications" class="card" style="max-height:280px;overflow:auto"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn ghost small" id="clearNotifsBtn">Bildirimleri Temizle</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Ürün Ekle -->
+<div id="addProductModal" class="modal">
+  <div class="panel">
+    <h3>Yeni Ürün Ekle</h3>
+    <form id="addProductForm">
+      <div class="row">
+        <div class="col">
+          <label>Başlık</label>
+          <input id="pTitle" type="text" required placeholder="Ör: Low-poly Ağaç Paketi"/>
+        </div>
+        <div class="col">
+          <label>Fiyat</label>
+          <input id="pPrice" type="number" min="0" step="0.01" required placeholder="50" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label>Stok</label>
+          <input id="pStock" type="number" min="0" value="10" required />
+        </div>
+        <div class="col">
+          <label>Grade (ör. 7, 8, 9)</label>
+          <select id="pGrade">
+            <option value="7">7</option>
+            <option value="8" selected>8</option>
+            <option value="9">9</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Renkler (virgülle ayırın)</label>
+      <input id="pColors" type="text" placeholder="Yeşil,Siyah,Beyaz" />
+
+      <label>Resim (URL veya yükleyin)</label>
+      <input id="pImageUrl" type="text" placeholder="https://..." />
+      <div style="margin-top:6px">
+        <input id="pImageFile" type="file" accept="image/*" />
+      </div>
+
+      <label>Açıklama</label>
+      <textarea id="pDesc" rows="4" placeholder="Ürün açıklaması..."></textarea>
+
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn" type="submit">Ekle</button>
+        <button class="btn secondary" id="cancelAddProduct" type="button">İptal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast"></div>
+<footer style="text-align:center;padding:14px;color:#777">Yeşil Baş Shop • Demo (veriniz tarayıcıda saklanır)</footer>
+
+<script>
+/* ================== Durum ================== */
+const DEFAULT_ADMIN_CODE = "Atlasejder35";
+const LS_KEY = "yesilbas_data_v3";
+
+let state = {
+  products: [],
+  cart: [],
+  notifications: [],
+  orders: [],
+  settings: { shopName: "Yeşil Baş Shop", currency: "₺", adminCode: DEFAULT_ADMIN_CODE },
+  likes: {}, // productId -> count
+  userLikes: {} // productId -> true/false (per browser)
 };
+let isAdmin = false;
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const $ = s=>document.querySelector(s);
+const $$ = s=>document.querySelectorAll(s);
 
-const navBtns = document.getElementById("navBtns");
-const greeting = document.getElementById("greeting");
-const gamesDiv = document.getElementById("games");
-const friendsDiv = document.getElementById("friends");
-const newsDiv = document.getElementById("news");
-const searchResultsSection = document.getElementById("searchResultsSection");
-const searchResultsDiv = document.getElementById("searchResults");
+/* ================== Yardımcılar ================== */
+function uid(){ return 'id-'+Math.random().toString(36).slice(2,9); }
+function now(){ return new Date().toLocaleString(); }
+function trMap(s){ // Türkçe normalizasyon (İ/ı/ş/ğ/ç/ö/ü) + lower
+  if(!s) return "";
+  return s
+    .replace(/İ/g,'i').replace(/I/g,'ı')
+    .toLocaleLowerCase('tr')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,''); // diakritik temizle
+}
+function highlight(text, q){
+  if(!q) return text;
+  const t = trMap(text);
+  const i = t.indexOf(q);
+  if(i<0) return text;
+  return text.substring(0,i) + '<mark>' + text.substring(i, i+q.length) + '</mark>' + text.substring(i+q.length);
+}
+function formatPrice(x){
+  const cur = (state.settings?.currency || "₺");
+  return cur + " " + Number(x||0).toFixed(2);
+}
+function toast(msg){
+  const box = $("#toast");
+  box.textContent = msg;
+  box.classList.add('show');
+  setTimeout(()=>box.classList.remove('show'), 2800);
+}
+function saveState(){ localStorage.setItem(LS_KEY, JSON.stringify(state)); renderAll(); }
+function loadState(){
+  const raw = localStorage.getItem(LS_KEY);
+  if(raw){
+    try{ state = JSON.parse(raw); }
+    catch(e){ seed(); }
+  } else seed();
+  state.settings = Object.assign({ shopName:"Yeşil Baş Shop", currency:"₺", adminCode: DEFAULT_ADMIN_CODE }, state.settings||{});
+  // Kullanıcı beğenileri
+  state.userLikes = state.userLikes||{};
+}
+function seed(){
+  state.products = [
+    { id: uid(), title:"Low-Poly Ağaç Paketi", price:85, stock:12, grade:"8", colors:["Yeşil","Beyaz"], img:"https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&q=60", desc:"Ortamlar için düşük poligonlu ağaçlar.", comments:[] },
+    { id: uid(), title:"PBR Kaya Seti", price:140, stock:5, grade:"8", colors:["Siyah","Beyaz"], img:"https://images.unsplash.com/photo-1543852786-1cf6624b9987?w=800&q=60", desc:"Yüksek kaliteli PBR kaya dokuları.", comments:[] },
+    { id: uid(), title:"Oyun-Hazır İnsan Rig", price:260, stock:3, grade:"9", colors:[], img:"https://images.unsplash.com/photo-1506765515384-028b60a970df?w=800&q=60", desc:"Animasyonlar için rig’lenmiş model.", comments:[] }
+  ];
+  state.cart = [];
+  state.notifications = [];
+  state.orders = [];
+  state.settings = { shopName:"Yeşil Baş Shop", currency:"₺", adminCode: DEFAULT_ADMIN_CODE };
+  state.likes = {};
+  state.userLikes = {};
+  saveState();
+}
+function addNotification(title, message){
+  state.notifications.push({ id: uid(), title, message, time: now() });
+  saveState();
+}
 
-let currentUser;
+/* ================== Ürün Listeleme (Kamu) ================== */
+let currentFilterColor = "";
+let searchDebounce;
+function renderProducts(){
+  const container = $("#productsContainer");
+  container.innerHTML = "";
+  const rawq = $("#searchInput").value.trim();
+  const q = trMap(rawq);
 
-// Load Games
-async function loadGames(){
-  gamesDiv.innerHTML = "";
-  const snap = await getDocs(collection(db, "games"));
-  if(snap.empty){ gamesDiv.innerHTML = "<div class='card'><p>No games yet.</p></div>"; return; }
-  snap.forEach(doc=>{
-    const game = doc.data();
-    gamesDiv.innerHTML += `<div class="card"><img src="${game.thumbnail||'https://placehold.co/150x100'}" alt="Game"><p>${game.name}</p></div>`;
+  state.products.forEach(p=>{
+    // Filtreler
+    if(currentFilterColor && !(p.colors||[]).includes(currentFilterColor)) return;
+    const haystack = [p.title, p.desc, (p.colors||[]).join(','), p.grade||''].map(trMap).join(' • ');
+    if(q && !haystack.includes(q)) return;
+
+    const low = (p.stock||0) <= 3;
+    const titleHTML = rawq ? highlight(p.title, q) : p.title;
+    const descHTML  = rawq ? highlight(p.desc||'', q) : (p.desc||'');
+    const liked = !!state.userLikes[p.id];
+    const likeCount = state.likes[p.id]||0;
+
+    const el = document.createElement('div');
+    el.className = "product";
+    el.innerHTML = `
+      <img src="${p.img || 'https://via.placeholder.com/400x300?text=No+Image'}" alt="${p.title}">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+        <div class="p-title">${titleHTML}</div>
+        <span class="badge">${p.grade ? "Grade "+p.grade : "Grade —"}</span>
+      </div>
+      <div class="small">${descHTML}</div>
+      <div class="p-meta">
+        <div class="price">${formatPrice(p.price)}</div>
+        <div class="stock ${low?'low':''}">${p.stock>0 ? p.stock+' adet' : 'Tükendi'}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="small">Renkler: ${(p.colors&&p.colors.length)? p.colors.join(', '): '—'}</div>
+        <div class="controls">
+          <button class="btn buyBtn" data-id="${p.id}" ${p.stock<=0? 'disabled':''}>Satın Al</button>
+          <button class="btn secondary viewBtn" data-id="${p.id}">İncele</button>
+          <button class="btn ghost small likeBtn" data-id="${p.id}" aria-label="Beğen">${liked?'❤️':'🤍'} <span class="likeCount">${likeCount}</span></button>
+        </div>
+      </div>
+    `;
+    container.appendChild(el);
   });
 }
 
-// Load Friends
-async function loadFriends(user){
-  friendsDiv.innerHTML = "";
-  const snap = await getDocs(query(collection(db, "friends"), where("uid", "==", user.uid)));
-  if(snap.empty){ friendsDiv.innerHTML = "<div class='card'><p>No friends yet.</p></div>"; return; }
-  snap.forEach(doc=>{
-    const friend = doc.data();
-    friendsDiv.innerHTML += `<div class="card"><img src="${friend.avatar||'https://www.gravatar.com/avatar/?d=mp'}" alt="Friend"><p>${friend.name}</p></div>`;
-  });
+/* ================== Admin: Liste ================== */
+function productAdminRow(p){
+  const low = (p.stock||0) <= 3;
+  return `
+  <table class="table" style="margin-bottom:6px;width:100%">
+    <tr>
+      <td style="width:32px;text-align:center"><input type="checkbox" class="selectRow" data-id="${p.id}" /></td>
+      <td style="width:100px"><img src="${p.img||'https://via.placeholder.com/80'}" style="width:96px;height:72px;object-fit:cover;border-radius:6px"/></td>
+      <td>
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <div>
+            <div style="font-weight:700">${p.title}</div>
+            <div class="small">${p.desc || ''}</div>
+            <div class="small" style="opacity:.7">ID: ${p.id}</div>
+            <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+              <span class="pill">Grade: ${p.grade||'—'}</span>
+              <span class="pill">Renk: ${(p.colors&&p.colors.length)? p.colors.join(', '): '—'}</span>
+              <span class="pill">Beğeni: ${state.likes[p.id]||0}</span>
+            </div>
+          </div>
+          <div style="text-align:right;min-width:150px">
+            <div class="price">${formatPrice(p.price)}</div>
+            <div class="stock ${low?'low':''}" style="display:inline-block;margin-top:4px">${p.stock>0?p.stock+' adet':'Tükendi'}</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn small adminEdit" data-id="${p.id}">Düzenle</button>
+          <button class="btn ghost small adminDuplicate" data-id="${p.id}">Kopyala</button>
+          <button class="btn secondary small adminDelete" data-id="${p.id}">Sil</button>
+        </div>
+      </td>
+    </tr>
+  </table>`;
+}
+function renderAdminProducts(){
+  if(!isAdmin) return;
+  const box = $("#adminProducts");
+  let list = [...state.products];
+
+  const qraw = $("#adminSearch").value?.trim() || "";
+  const q = trMap(qraw);
+  if(q){ list = list.filter(p =>
+      [p.title, p.desc, (p.colors||[]).join(','), p.grade||''].map(trMap).join(' ').includes(q)
+  );}
+  if($("#filterLowStock").checked){ list = list.filter(p => (p.stock||0) <= 3); }
+
+  const sort = $("#adminSort").value;
+  const sorters = {
+    "title_asc": (a,b)=> a.title.localeCompare(b.title,'tr'),
+    "price_asc": (a,b)=> (a.price||0)-(b.price||0),
+    "price_desc": (a,b)=> (b.price||0)-(a.price||0),
+    "stock_asc": (a,b)=> (a.stock||0)-(b.stock||0),
+    "stock_desc": (a,b)=> (b.stock||0)-(a.stock||0),
+  };
+  if(sort && sorters[sort]) list.sort(sorters[sort]);
+
+  box.innerHTML = list.length ? list.map(productAdminRow).join("") : '<div class="small">Kriterlere uygun ürün yok.</div>';
 }
 
-// Load News
-async function loadNews(){
-  newsDiv.innerHTML = "";
-  const snap = await getDocs(collection(db, "news"));
-  if(snap.empty){ newsDiv.innerHTML = "<div class='card'><p>No news yet.</p></div>"; return; }
-  snap.forEach(doc=>{
-    const item = doc.data();
-    newsDiv.innerHTML += `<div class="card"><p><b>${item.title}</b><br>${item.text}</p></div>`;
-  });
+/* ================== Bildirimler (sadece admin sekmesi) ================== */
+function renderNotifications(){
+  if(!isAdmin) return;
+  const adminBox = $("#adminNotifications");
+  const notes = state.notifications.slice().reverse();
+  adminBox.innerHTML = notes.length ? notes.map(n=>(
+    `<div class="card">
+      <div style="font-weight:700">${n.title}</div>
+      <div class="small" style="opacity:.7">${n.time}</div>
+      <div style="margin-top:6px;white-space:pre-wrap">${n.message}</div>
+    </div>`
+  )).join("") : '<div class="small">Henüz bildirim yok.</div>';
 }
 
-// Search Users
-window.searchUser = async function(){
-  const input = document.getElementById("searchInput").value.trim();
-  if(!input) return alert("Enter a username");
-  searchResultsDiv.innerHTML = "";
-  const usersRef = collection(db, "users");
-  const q = query(usersRef, where("displayName", "==", input));
-  const snap = await getDocs(q);
-  searchResultsSection.style.display = "block";
-  if(snap.empty){ searchResultsDiv.innerHTML = "<div class='card'><p>No user found.</p></div>"; return; }
-  snap.forEach(doc=>{
-    const data = doc.data();
-    if(data.uid === currentUser?.uid) return; // skip self
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `<img src="${data.avatar||'https://www.gravatar.com/avatar/?d=mp'}"><p>${data.displayName}</p>`;
-    const btn = document.createElement("button");
-    btn.innerText = "Add Friend";
-    btn.onclick = async function(){
-      btn.disabled = true;
-      btn.innerText = "Requested";
-      await addDoc(collection(db, "friendRequests"), {from: currentUser.uid, to: data.uid, status:"pending"});
-    };
-    card.appendChild(btn);
-    searchResultsDiv.appendChild(card);
-  });
-}
-
-// User state
-onAuthStateChanged(auth, (user) => {
-  currentUser = user;
-  if (user) {
-    greeting.innerHTML = `<img src="${user.photoURL||'https://www.gravatar.com/avatar/?d=mp'}" alt="Profile"><h2>Hi, ${user.displayName||'User'}!</h2><p>${user.email}</p>`;
-    navBtns.innerHTML = `<a href="index.html">Home</a><a href="account.html">Account</a><button onclick="logout()">Logout</button>`;
-    loadFriends(user);
-  } else {
-    greeting.innerHTML = `<h2>Welcome to Boat Revival</h2><p>Please login or register.</p>`;
-    navBtns.innerHTML = `<a href="login.html">Login</a><a href="register.html">Register</a>`;
-    friendsDiv.innerHTML = "<div class='card'><p>Login to see friends.</p></div>";
+/* ================== Sepet & Sipariş ================== */
+function renderCart(){
+  const list = $("#cartList");
+  if(state.cart.length === 0) list.innerHTML = '<div class="small">Sepet boş.</div>';
+  else {
+    list.innerHTML = '';
+    state.cart.forEach((c, idx)=>{
+      const p = state.products.find(x=>x.id===c.productId) || {};
+      const item = document.createElement('div');
+      item.className = 'card';
+      item.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div style="display:flex;gap:12px;align-items:center">
+            <img src="${p.img||'https://via.placeholder.com/80'}" style="width:64px;height:56px;object-fit:cover;border-radius:6px"/>
+            <div>
+              <div style="font-weight:700">${p.title||'Bilinmiyor'}</div>
+              <div class="small">${c.color? 'Renk: '+c.color : ''} ${c.grade? '• Grade: '+c.grade : ''}</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div class="price">${formatPrice(p.price||0)}</div>
+            <div class="small">Adet: ${c.qty}</div>
+            <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">
+              <button class="btn secondary removeCartItem" data-idx="${idx}">Kaldır</button>
+            </div>
+          </div>
+        </div>
+      `;
+      list.appendChild(item);
+    });
+    const total = state.cart.reduce((s,c)=> {
+      const p = state.products.find(x=>x.id===c.productId);
+      return s + (p ? (p.price||0) * c.qty : 0);
+    },0);
+    const totalNode = document.createElement('div');
+    totalNode.className = 'card';
+    totalNode.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><strong>Toplam</strong></div>
+        <div style="font-weight:800">${formatPrice(total)}</div>
+      </div>
+    `;
+    list.appendChild(totalNode);
   }
-  loadGames();
-  loadNews();
+  $("#cartCount").textContent = state.cart.reduce((s,c)=>s+c.qty,0);
+}
+function renderOrders(){
+  if(!isAdmin) return;
+  const wrap = $("#adminOrders");
+  let list = [...state.orders];
+  const f = $("#orderFilter").value;
+  if(f) list = list.filter(o=>o.status===f);
+  wrap.innerHTML = list.length ? list.slice().reverse().map(o=>`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <div>
+          <div style="font-weight:700">#${o.id}</div>
+          <div class="small" style="opacity:.7">${o.time}</div>
+          <div class="small" style="margin-top:6px">${o.items.map(i=>`• ${i.productTitle} (${i.color||'—'} / ${i.grade||'—'}) x${i.qty}`).join('<br>')}</div>
+        </div>
+        <div style="text-align:right;min-width:160px">
+          <div class="price">${formatPrice(o.total)}</div>
+          <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end;flex-wrap:wrap">
+            <span class="badge">${o.status}</span>
+            <button class="btn ghost small setStatus" data-id="${o.id}" data-s="Hazırlandı">Hazırlandı</button>
+            <button class="btn ghost small setStatus" data-id="${o.id}" data-s="Kargolandı">Kargolandı</button>
+            <button class="btn ghost small setStatus" data-id="${o.id}" data-s="İptal">İptal</button>
+            <button class="btn secondary small deleteOrder" data-id="${o.id}">Sil</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join("") : '<div class="small">Sipariş yok.</div>';
+}
+
+/* ================== Yorumlar (Admin) ================== */
+function renderComments(){
+  if(!isAdmin) return;
+  const wrap = $("#adminComments");
+  const rows = [];
+  state.products.forEach(p=> (p.comments||[]).forEach(c=>rows.push({pid:p.id, ptitle:p.title, ...c})));
+  wrap.innerHTML = rows.length ? rows.slice().reverse().map(r=>`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <div>
+          <div style="font-weight:700">${r.name}</div>
+          <div class="small" style="opacity:.7">${r.time} • ${r.ptitle}</div>
+          <div style="margin-top:6px;white-space:pre-wrap">${r.text}</div>
+        </div>
+        <div>
+          <button class="btn secondary small deleteComment" data-cid="${r.id}" data-pid="${r.pid}">Sil</button>
+        </div>
+      </div>
+    </div>
+  `).join("") : '<div class="small">Yorum yok.</div>';
+}
+
+/* ================== Genel Render ================== */
+function renderAll(){
+  document.title = (state.settings?.shopName || "Yeşil Baş Shop") + " — 3D Model Pazaryeri";
+  $("#shopTitle").textContent = state.settings?.shopName || "Yeşil Baş Shop";
+  renderProducts();
+  if(isAdmin){
+    renderAdminProducts(); renderOrders(); renderComments(); renderNotifications();
+  }
+  renderCart();
+}
+
+/* ================== Eventler ================== */
+document.addEventListener('click', (e)=>{
+  const t = e.target;
+
+  if(t.matches('.filterColor')) {
+    currentFilterColor = t.dataset.color;
+    renderProducts();
+  } else if(t.matches('.buyBtn')){
+    openBuyDialog(t.dataset.id);
+  } else if(t.matches('.viewBtn')){
+    openViewDialog(t.dataset.id);
+  } else if(t.matches('#openCartBtn')){
+    openModal('cartModal'); renderCart();
+  } else if(t.matches('#closeCartBtn')){
+    closeModal('cartModal');
+  } else if(t.matches('#openAdminBtn')){
+    promptAdminLogin();
+  } else if(t.matches('#closeAdminBtn')){
+    isAdmin = false; closeModal('adminModal'); toast('Admin oturumu kapatıldı');
+  } else if(t.matches('#addProductBtn')){
+    openModal('addProductModal');
+  } else if(t.matches('#cancelAddProduct')){
+    closeModal('addProductModal');
+  } else if(t.matches('.removeCartItem')){
+    const idx = Number(t.dataset.idx);
+    state.cart.splice(idx,1); saveState();
+  } else if(t.matches('#checkoutBtn')){
+    doCheckout();
+  } else if(t.matches('.adminDelete')){
+    if(!isAdmin) return;
+    const id = t.dataset.id;
+    if(confirm('Bu ürünü silmek istediğinize emin misiniz?')){
+      state.products = state.products.filter(p=>p.id !== id);
+      addNotification('Ürün Silindi', `Ürün ID ${id} silindi.`);
+    }
+  } else if(t.matches('.adminEdit')){
+    if(!isAdmin) return;
+    editProductDialog(t.dataset.id);
+  } else if(t.matches('.adminDuplicate')){
+    if(!isAdmin) return;
+    duplicateProduct(t.dataset.id);
+  } else if(t.matches('#exportBtn')){
+    if(!isAdmin) return;
+    exportJSON();
+  } else if(t.matches('#bulkDeleteBtn')){
+    if(!isAdmin) return;
+    bulkDelete();
+  } else if(t.matches('.tab')){
+    if(!isAdmin) return;
+    $$('.tab').forEach(x=>x.classList.remove('active'));
+    $$('.tab-panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.tab).classList.add('active');
+  } else if(t.matches('.setStatus')){
+    if(!isAdmin) return;
+    setOrderStatus(t.dataset.id, t.dataset.s);
+  } else if(t.matches('.deleteOrder')){
+    if(!isAdmin) return;
+    deleteOrder(t.dataset.id);
+  } else if(t.matches('.deleteComment')){
+    if(!isAdmin) return;
+    deleteComment(t.dataset.pid, t.dataset.cid);
+  } else if(t.matches('#clearDataBtn')){
+    if(!isAdmin) return;
+    if(confirm("Tüm veriyi sıfırlamak istiyor musunuz?")){
+      localStorage.removeItem(LS_KEY); seed(); toast('Veriler sıfırlandı');
+    }
+  } else if(t.matches('#clearNotifsBtn')){
+    if(!isAdmin) return;
+    state.notifications = []; saveState(); toast('Bildirimler temizlendi');
+  } else if(t.matches('#saveSettingsBtn')){
+    if(!isAdmin) return;
+    state.settings.shopName = $("#cfgShopName").value.trim() || "Yeşil Baş Shop";
+    state.settings.currency = $("#cfgCurrency").value.trim() || "₺";
+    state.settings.adminCode = $("#cfgAdminCode").value || DEFAULT_ADMIN_CODE;
+    addNotification('Ayarlar Kaydedildi', `Mağaza: ${state.settings.shopName}\nPara birimi: ${state.settings.currency}`);
+    saveState(); toast('Ayarlar kaydedildi');
+  } else if(t.matches('.likeBtn')){
+    const id = t.dataset.id;
+    toggleLike(id, t);
+  }
 });
 
-window.logout = function(){
-  signOut(auth).then(()=>{ window.location.href="index.html"; });
-}
-</script>
+/* Aramalar (debounce) */
+function debounce(fn, ms){ let h; return (...a)=>{ clearTimeout(h); h=setTimeout(()=>fn(...a), ms); }; }
+$("#searchInput").addEventListener('input', debounce(renderProducts, 120));
+$("#adminSearch").addEventListener('input', debounce(renderAdminProducts, 120));
+$("#adminSort")?.addEventListener('change', renderAdminProducts);
+$("#filterLowStock")?.addEventListener('change', renderAdminProducts);
 
-</body>
-</html>
+/* Dosya içe aktarma */
+$("#importFile").addEventListener('change', async (e)=>{
+  if(!isAdmin) return;
+  const file = e.target.files[0]; if(!file) return;
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if(!data || typeof data!=='object') throw new Error();
+    state.products = Array.isArray(data.products)? data.products : state.products;
+    state.orders = Array.isArray(data.orders)? data.orders : state.orders;
+    state.notifications = Array.isArray(data.notifications)? data.notifications : state.notifications;
+    state.settings = Object.assign(state.settings, data.settings||{});
+    state.likes = Object.assign({}, state.likes, data.likes||{});
+    addNotification('İçe Aktarma', 'Veriler başarıyla içe aktarıldı.');
+    saveState(); toast('İçe aktarıldı');
+  }catch(err){ alert('Geçersiz JSON dosyası.'); }
+  finally { e.target.value = ""; }
+});
+
+/* ================== Admin Girişi ================== */
+function promptAdminLogin(){
+  const code = prompt("Yönetici kodunu girin:");
+  const adminCode = state.settings?.adminCode || DEFAULT_ADMIN_CODE;
+  if(code === adminCode){
+    isAdmin = true; openModal('adminModal'); renderAll(); toast('Admin girişi başarılı');
+  } else {
+    isAdmin = false; alert("Yanlış kod.");
+  }
+}
+
+/* ================== Ürün Ekle ================== */
+$("#addProductForm").addEventListener('submit', async function(e){
+  e.preventDefault();
+  const title = $("#pTitle").value.trim();
+  const price = Number($("#pPrice").value);
+  const stock = Number($("#pStock").value);
+  const grade = $("#pGrade").value;
+  const colors = $("#pColors").value.split(',').map(s=>s.trim()).filter(Boolean);
+  const imgUrl = $("#pImageUrl").value.trim();
+  const desc = $("#pDesc").value.trim();
+  const file = $("#pImageFile").files[0];
+
+  let img = imgUrl || '';
+  if(!img && file){ img = await fileToDataURL(file); }
+  if(!img) img = 'https://via.placeholder.com/800x600?text=No+Image';
+
+  const newP = { id: uid(), title, price, stock, grade, colors, img, desc, comments: [] };
+  state.products.push(newP);
+  addNotification('Yeni Ürün', `${title} eklendi (ID: ${newP.id}).`);
+  saveState();
+  $("#addProductForm").reset();
+  closeModal('addProductModal');
+});
+function fileToDataURL(file){
+  return new Promise((res, rej)=>{
+    const fr = new FileReader();
+    fr.onload = ()=> res(fr.result);
+    fr.onerror = ()=> rej('error');
+    fr.readAsDataURL(file);
+  });
+}
+
+/* ================== Beğeni ================== */
+function toggleLike(id, btn){
+  const already = !!state.userLikes[id];
+  if(already){ state.userLikes[id]=false; state.likes[id]=(state.likes[id]||1)-1; if(state.likes[id]<0) state.likes[id]=0; }
+  else { state.userLikes[id]=true; state.likes[id]=(state.likes[id]||0)+1; }
+  const cnt = btn.querySelector('.likeCount'); if(cnt) cnt.textContent = state.likes[id]||0;
+  btn.innerHTML = `${state.userLikes[id]?'❤️':'🤍'} <span class="likeCount">${state.likes[id]||0}</span>`;
+  saveState();
+}
+
+/* ================== Satın Alma Akışı ================== */
+function openBuyDialog(productId
